@@ -2,6 +2,7 @@ package org.comppress.customnewsapi.entity;
 
 import lombok.Data;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
@@ -9,6 +10,7 @@ import javax.persistence.ManyToOne;
 @Entity
 public class Article extends AbstractEntity{
 
+    @Column(unique = true)
     private String url;
     private String title;
     private String imageUrl;

@@ -6,19 +6,14 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class RssFeed extends AbstractEntity{
+public class Category extends AbstractEntity{
 
-    @ManyToOne
-    private Category category;
     @Column(unique = true)
-    private String urlRssFeed;
-    @ManyToOne
-    private Publisher publisher;
+    private String name;
 
 }
