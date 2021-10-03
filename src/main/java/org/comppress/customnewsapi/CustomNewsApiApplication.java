@@ -23,6 +23,7 @@ public class CustomNewsApiApplication {
 		SpringApplication.run(CustomNewsApiApplication.class, args);
 	}
 
+	/*
 	@Bean
 	@Autowired
 	CommandLineRunner run(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository){
@@ -49,5 +50,5 @@ public class CustomNewsApiApplication {
 			}
 		};
 	}
-
+	*/
 }
