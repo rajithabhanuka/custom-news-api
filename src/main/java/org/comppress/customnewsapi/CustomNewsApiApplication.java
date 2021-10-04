@@ -23,31 +23,31 @@ public class CustomNewsApiApplication {
 		SpringApplication.run(CustomNewsApiApplication.class, args);
 	}
 
-	@Bean
-	@Autowired
-	CommandLineRunner run(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository){
-		return args -> {
-			Optional<Publisher> optionalPublisher = publisherRepository.findByName("Spiegel");
-			if(optionalPublisher.isEmpty()){
-				Publisher publisher = publisherRepository.save(new Publisher("Spiegel"));
-				optionalPublisher =  Optional.of(publisher);
-			}
-
-			Optional<Category> optionalCategory = categoryRepository.findByName("Sport");
-			if(optionalCategory.isEmpty()){
-				Category category = categoryRepository.save(new Category("Sport"));
-				optionalCategory =  Optional.of(category);
-			}
-			String rssFeedUrl = "https://www.spiegel.de/sport/fussball/index.rss";
-			Optional<RssFeed> rssFeedOptional = rssFeedRepository.findByUrlRssFeed(rssFeedUrl);
-			if(rssFeedOptional.isEmpty()){
-				log.info("Create new Rss Feed Object {} in DB", rssFeedOptional);
-				rssFeedRepository.save(
-						new RssFeed(optionalCategory.get(), rssFeedUrl, optionalPublisher.get()));
-			}else {
-				log.info("DB entry for Table Rss Feed with url {} is already there", rssFeedUrl);
-			}
-		};
-	}
+//	@Bean
+//	@Autowired
+//	CommandLineRunner run(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository){
+//		return args -> {
+//			Optional<Publisher> optionalPublisher = publisherRepository.findByName("Spiegel");
+//			if(optionalPublisher.isEmpty()){
+//				Publisher publisher = publisherRepository.save(new Publisher("Spiegel"));
+//				optionalPublisher =  Optional.of(publisher);
+//			}
+//
+//			Optional<Category> optionalCategory = categoryRepository.findByName("Sport");
+//			if(optionalCategory.isEmpty()){
+//				Category category = categoryRepository.save(new Category("Sport"));
+//				optionalCategory =  Optional.of(category);
+//			}
+//			String rssFeedUrl = "https://www.spiegel.de/sport/fussball/index.rss";
+//			Optional<RssFeed> rssFeedOptional = rssFeedRepository.findByUrlRssFeed(rssFeedUrl);
+//			if(rssFeedOptional.isEmpty()){
+//				log.info("Create new Rss Feed Object {} in DB", rssFeedOptional);
+//				rssFeedRepository.save(
+//						new RssFeed(optionalCategory.get(), rssFeedUrl, optionalPublisher.get()));
+//			}else {
+//				log.info("DB entry for Table Rss Feed with url {} is already there", rssFeedUrl);
+//			}
+//		};
+//	}
 
 }
