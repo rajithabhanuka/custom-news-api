@@ -2,9 +2,11 @@ package org.comppress.customnewsapi.loader;
 
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.entity.Category;
+import org.comppress.customnewsapi.entity.Feed;
 import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.repository.CategoryRepository;
+import org.comppress.customnewsapi.repository.FeedRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,38 +20,32 @@ import java.util.Optional;
 @Slf4j
 public class EntityLoader implements ApplicationRunner {
 
-    private PublisherRepository publisherRepository;
-    private RssFeedRepository rssFeedRepository;
-    private CategoryRepository categoryRepository;
+    private FeedRepository feedRepository;
 
     @Autowired
-    public EntityLoader(PublisherRepository publisherRepository, RssFeedRepository rssFeedRepository, CategoryRepository categoryRepository) {
-        this.publisherRepository = publisherRepository;
-        this.rssFeedRepository = rssFeedRepository;
-        this.categoryRepository = categoryRepository;
+    public EntityLoader(FeedRepository feedRepository) {
+        this.feedRepository = feedRepository;
     }
 
     @Override
     public void run(ApplicationArguments args)  {
-        Optional<Publisher> optionalPublisher = publisherRepository.findByName("Spiegel");
-        if(optionalPublisher.isEmpty()){
-            Publisher publisher = publisherRepository.save(new Publisher("Spiegel"));
-            optionalPublisher =  Optional.of(publisher);
-        }
 
-        Optional<Category> optionalCategory = categoryRepository.findByName("Sport");
-        if(optionalCategory.isEmpty()){
-            Category category = categoryRepository.save(new Category("Sport"));
-            optionalCategory =  Optional.of(category);
+        String [] arrayRssFeedUrls = new String[]{
+                "https://www.spiegel.de/sport/fussball/index.rss",
+                "https://www.spiegel.de/auto/index.rss",
+                "https://www.spiegel.de/politik/index.rss",
+                "https://www.spiegel.de/reise/index.rss"
+        };
+
+        int counter = 0;
+        for (String url:arrayRssFeedUrls) {
+            if(!feedRepository.existsByUrl(url)){
+                feedRepository.save(
+                        new Feed(url, "none", 0L)
+                );
+                counter++;
+            }
         }
-        String rssFeedUrl = "https://www.spiegel.de/sport/fussball/index.rss";
-        Optional<RssFeed> rssFeedOptional = rssFeedRepository.findByUrlRssFeed(rssFeedUrl);
-        if(rssFeedOptional.isEmpty()){
-            log.info("Create new Rss Feed Object {} in DB", rssFeedOptional);
-            rssFeedRepository.save(
-                    new RssFeed(optionalCategory.get(), rssFeedUrl, optionalPublisher.get()));
-        }else {
-            log.info("DB entry for Table Rss Feed with url {} is already there", rssFeedUrl);
-        }
+        log.info(counter + " database entries were added");
     }
 }

@@ -1,13 +1,16 @@
 package org.comppress.customnewsapi.parser;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.comppress.customnewsapi.entity.Article;
-import org.comppress.customnewsapi.entity.RssFeed;
-import org.comppress.customnewsapi.repository.RssFeedRepository;
+import org.comppress.customnewsapi.entity.Feed;
+import org.comppress.customnewsapi.entity.SavedFeed;
+import org.comppress.customnewsapi.repository.FeedRepository;
+import org.comppress.customnewsapi.repository.SavedFeedRepository;
+import org.comppress.customnewsapi.xmlModel.RssXmlModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,35 +18,41 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @Component
+@RestController
 public class XmlParser {
 
-    RssFeedRepository rssFeedRepository;
+    FeedRepository feedRepository;
+    SavedFeedRepository savedFeedRepository;
 
     @Autowired
-    public XmlParser(RssFeedRepository rssFeedRepository) {
-        this.rssFeedRepository = rssFeedRepository;
+    public XmlParser(FeedRepository feedRepository, SavedFeedRepository savedFeedRepository) {
+        this.feedRepository = feedRepository;
+        this.savedFeedRepository = savedFeedRepository;
     }
 
-    public List<Article> fetchArticles() {
-        List<RssFeed> rssFeedList = rssFeedRepository.findAll();
-        log.info("Fetched {} rss feeds from the database", rssFeedList.size());
-        List<Article> allArticlesList = new ArrayList<>();
+    @GetMapping("/news")
+    public String fetchArticles() {
 
-        for (RssFeed rssFeed:rssFeedList) {
+        for (Feed feed:feedRepository.findAll()) {
             try {
-                String webPage = urlReader(rssFeed.getUrlRssFeed());
+                String webPage = urlReader(feed.getUrl());
+                XmlMapper xmlMapper = new XmlMapper();
+                // Service Layer
+                // RssXmlModel rssXmlModel = xmlMapper.readValue(webPage, RssXmlModel.class);
+                int hashcode = webPage.hashCode();
+                if(hashcode != feed.getHash()){
+                    SavedFeed savedFeed = new SavedFeed(feed,webPage);
+                    savedFeedRepository.save(savedFeed);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
-        log.info("Returning {} articles", allArticlesList.size());
-        return allArticlesList;
+
+        return "fetched News from " + arrayRssFeedUrls.length + " different rss feeds";
     }
 
     private String urlReader(String url) throws URISyntaxException, IOException, InterruptedException {
