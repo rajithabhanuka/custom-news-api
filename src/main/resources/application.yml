@@ -13,3 +13,6 @@ server:
   port: 8080
   servlet:
     context-path: /news-api
+scheduler:
+  triggeringIntervalMilliSeconds: 20000
+  initialDelayIntervalMilliSeconds: 5000

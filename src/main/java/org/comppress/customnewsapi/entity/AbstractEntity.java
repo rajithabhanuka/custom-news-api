@@ -14,17 +14,11 @@ public abstract class AbstractEntity {
     protected Long id;
     @Version
     protected Long version;
-    @Convert(converter = LocalDateTimeConverter.class)
-    protected LocalDateTime dateCreated;
-    @Convert(converter = LocalDateTimeConverter.class)
-    protected LocalDateTime dateModified;
+    //@Convert(converter = LocalDateTimeConverter.class)
+    protected LocalDateTime dateCreated = LocalDateTime.now();;
+    //@Convert(converter = LocalDateTimeConverter.class)
+    protected LocalDateTime dateModified = LocalDateTime.now();
     protected Boolean deleted;
-
-    @PrePersist
-    protected void onCreate(){
-        this.dateCreated = LocalDateTime.now();
-        this.dateModified = dateCreated;
-    }
 
     @PreUpdate
     protected void onUpdate(){

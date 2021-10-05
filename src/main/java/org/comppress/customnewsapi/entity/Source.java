@@ -11,9 +11,9 @@ import javax.persistence.Entity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Category extends AbstractEntity{
+public class Source extends AbstractEntity {
 
     @Column(unique = true)
-    private String name;
+    String name;
 
 }

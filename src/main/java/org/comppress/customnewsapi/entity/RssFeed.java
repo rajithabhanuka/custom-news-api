@@ -14,11 +14,10 @@ import javax.persistence.ManyToOne;
 @Entity
 public class RssFeed extends AbstractEntity{
 
-    @ManyToOne
-    private Category category;
     @Column(unique = true)
-    private String urlRssFeed;
+    private String url;
     @ManyToOne
-    private Publisher publisher;
+    private Source source;
+    private String category;
 
 }
