@@ -1,8 +1,7 @@
-package org.comppress.customnewsapi.dto;
+package org.comppress.customnewsapi.dto.xml;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data

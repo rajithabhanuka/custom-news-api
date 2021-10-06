@@ -1,4 +1,4 @@
-package org.comppress.customnewsapi.dto;
+package org.comppress.customnewsapi.dto.xml;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import lombok.Data;

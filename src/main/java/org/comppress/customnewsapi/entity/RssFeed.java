@@ -17,7 +17,7 @@ public class RssFeed extends AbstractEntity{
     @Column(unique = true)
     private String url;
     @ManyToOne
-    private Source source;
+    private Publisher publisher;
     private String category;
 
 }

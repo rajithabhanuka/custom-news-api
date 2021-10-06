@@ -1,44 +1,62 @@
 package org.comppress.customnewsapi.loader;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.comppress.customnewsapi.dto.json.PublisherDto;
+import org.comppress.customnewsapi.dto.json.RootDto;
+import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.RssFeed;
-import org.comppress.customnewsapi.entity.Source;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
-import org.comppress.customnewsapi.repository.SourceRepository;
+import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+
+import java.io.File;
+import java.io.IOException;
 
 @Component
 @Slf4j
 public class EntityLoader implements ApplicationRunner {
 
     RssFeedRepository rssFeedRepository;
-    SourceRepository sourceRepository;
+    PublisherRepository publisherRepository;
 
     @Autowired
-    public EntityLoader(RssFeedRepository rssFeedRepository, SourceRepository sourceRepository) {
+    public EntityLoader(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository) {
         this.rssFeedRepository = rssFeedRepository;
-        this.sourceRepository = sourceRepository;
+        this.publisherRepository = publisherRepository;
     }
 
     @Override
-    public void run(ApplicationArguments args)  {
-
-        /*
-        String [] arrayRssFeedUrls = new String[]{
-                "https://www.spiegel.de/sport/fussball/index.rss",
-        };
-
-        Source source = new Source("Spiegel");
-        sourceRepository.save(source);
-
-        for (String url:arrayRssFeedUrls) {
-            RssFeed rssFeed = new RssFeed(url,source,"Sport");
-            rssFeedRepository.save(rssFeed);
+    public void run(ApplicationArguments args) throws IOException {
+        // https://stackoverflow.com/questions/44399422/read-file-from-resources-folder-in-spring-boot
+        File file = new ClassPathResource("json/news-feeds.json").getFile();
+        RootDto jsonModel = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            jsonModel = mapper.readValue(file, RootDto.class);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-         */
-        log.info("Exit Entity Loader");
+        int counterPublisher = 0;
+        int counterRssFeed = 0;
+        for (PublisherDto publisher : jsonModel.getPublisherDtos()) {
+            // Create Publisher
+            if (!publisherRepository.existsByName(publisher.getPublisher())) {
+                counterPublisher++;
+                publisherRepository.save(new Publisher(publisher.getPublisher()));
+            }
+            // Create RssFeed
+            if (!rssFeedRepository.existsByUrl(publisher.getRSSFeed())) {
+                counterRssFeed++;
+                rssFeedRepository.save(new RssFeed(publisher.getRSSFeed(), publisherRepository.findByName(publisher.getPublisher()), publisher.getCategory()));
+            }
+        }
+        log.info("Created " + counterPublisher + " Publisher and " + counterRssFeed + " Rss Feed");
+        log.info("Exiting Entity Loader now");
+
     }
 }

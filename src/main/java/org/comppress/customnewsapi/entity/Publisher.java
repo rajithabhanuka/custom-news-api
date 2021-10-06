@@ -11,7 +11,7 @@ import javax.persistence.Entity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Source extends AbstractEntity {
+public class Publisher extends AbstractEntity {
 
     @Column(unique = true)
     String name;
