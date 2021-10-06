@@ -39,40 +39,33 @@ public class ArticleService {
 
     public String fetchArticles() {
 
-        String newFeedArray[] = new String[]{
-                "https://www.spiegel.de/netzwelt/index.rss",
-                "https://rp-online.de/sport/feed.rss",
-                "https://www.neues-deutschland.de/rss/gesund_leben.xml",
-                "https://www.nzz.ch/sport.rss"
-        };
-        // for (RssFeed rssFeed : rssFeedRepository.findAll()) {
-        for (String url: newFeedArray){
+        for (RssFeed rssFeed : rssFeedRepository.findAll()) {
 
             RssDto rssDto = null;
 
             try {
-                String webPage = urlReader(url);
+                String webPage = urlReader(rssFeed.getUrl());
                 XmlMapper xmlMapper = new XmlMapper();
                 xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 xmlMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
                 rssDto = xmlMapper.readValue(webPage, RssDto.class);
 
+                List<ItemDto> itemDtoList = rssDto.getChannel().getItem();
+                itemDtoList.forEach(itemDto -> {
+                    Article article = mapstructMapper.itemDtoToArticle(itemDto);
+                    article.setRssFeed(rssFeed); // rssFeed
+                    try {
+                        articleRepository.save(article);
+                    } catch (DataIntegrityViolationException e) {
+                        log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
+                    } catch (Exception e) {
+                        log.error("Error while saving data {}", e.getLocalizedMessage());
+                    }
+                });
+
             } catch (Exception e) {
                 log.error("Error while converting data from xml {}", e.getLocalizedMessage());
             }
-
-            List<ItemDto> itemDtoList = rssDto.getChannel().getItem();
-            itemDtoList.forEach(itemDto -> {
-                Article article = mapstructMapper.itemDtoToArticle(itemDto);
-                article.setRssFeed(null); // rssFeed
-                try {
-                    articleRepository.save(article);
-                } catch (DataIntegrityViolationException e) {
-                    log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
-                } catch (Exception e) {
-                    log.error("Error while saving data {}", e.getLocalizedMessage());
-                }
-            });
         }
 
         return "Fetched News";

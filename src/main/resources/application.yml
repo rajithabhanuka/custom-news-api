@@ -3,7 +3,7 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/comppress?allowPublicKeyRetrieval=true
     username: root
-    password: secret
+    password: root
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
