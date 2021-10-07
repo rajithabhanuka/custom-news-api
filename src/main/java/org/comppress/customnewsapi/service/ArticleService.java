@@ -3,6 +3,7 @@ package org.comppress.customnewsapi.service;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.ItemDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.RssFeed;
@@ -12,6 +13,11 @@ import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.RssDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,6 +27,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,7 +69,6 @@ public class ArticleService {
                         log.error("Error while saving data {}", e.getLocalizedMessage());
                     }
                 });
-
             } catch (Exception e) {
                 log.error("Error while converting data from xml {}", e.getLocalizedMessage());
             }
@@ -82,6 +88,16 @@ public class ArticleService {
                 HttpResponse.BodyHandlers.ofString());
 
         return response.body();
+    }
+
+    public ResponseEntity<List<ArticleDto>> get(int page, int size){
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Article> articles = articleRepository.findAll(pageable);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                articles.get().map(s->s.toDto()).collect(Collectors.toList()));
     }
 
 

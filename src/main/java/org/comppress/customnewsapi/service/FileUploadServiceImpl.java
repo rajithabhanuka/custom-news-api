@@ -48,12 +48,14 @@ public class FileUploadServiceImpl implements FileUploadService {
         return ResponseEntity.status(HttpStatus.CREATED).body(rssFeeds);
     }
 
+    // Getting all the records
     private List<CSVRecord> getRecords(MultipartFile file) {
 
         try (
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withDelimiter(';'))
+//                BufferedReader reader = new BufferedReader();
+                CSVParser csvParser = new CSVParser(
+                        new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8),
+                        CSVFormat.DEFAULT.withDelimiter(';'))
         ) {
             return csvParser.getRecords();
         } catch (IOException e) {
@@ -61,6 +63,7 @@ public class FileUploadServiceImpl implements FileUploadService {
         }
     }
 
+    // Converting csv records to entities
     private List<RssFeed> getRssFeeds(List<CSVRecord> records) {
 
         List<RssFeed> rssFeeds = new ArrayList<>();

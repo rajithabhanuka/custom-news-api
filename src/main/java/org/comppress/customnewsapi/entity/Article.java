@@ -1,6 +1,8 @@
 package org.comppress.customnewsapi.entity;
 
 import lombok.Data;
+import org.comppress.customnewsapi.dto.ArticleDto;
+import org.springframework.beans.BeanUtils;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,4 +26,10 @@ public class Article extends AbstractEntity{
     private String content; // done
     @ManyToOne
     private RssFeed rssFeed;
+
+    public ArticleDto toDto(){
+        ArticleDto articleDto = new ArticleDto();
+        BeanUtils.copyProperties(this, articleDto);
+        return articleDto;
+    }
 }
