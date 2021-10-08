@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
+import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.dto.ItemDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.RssFeed;
@@ -11,11 +12,13 @@ import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.RssDto;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class ArticleService {
+public class ArticleService implements BaseSpecification {
 
     private final RssFeedRepository rssFeedRepository;
     private final MapstructMapper mapstructMapper;
@@ -90,14 +93,29 @@ public class ArticleService {
         return response.body();
     }
 
-    public ResponseEntity<List<ArticleDto>> get(int page, int size){
+    public ResponseEntity<GenericPage> getArticles(int page, int size,
+                                                        String title, String category,
+                                                        String publisherNewsPaper,
+                                                        String fromDate, String toDate){
 
-        Pageable pageable = PageRequest.of(page, size);
+        // Building query according to the arguments
+        Specification<Article> spec1 = querySpecificationLike(title, "title");
+        Specification<Article> spec2 = querySpecificationLike(category, "description");
+        Specification<Article> spec3 = querySpecificationLike(publisherNewsPaper, "author");
+        Specification<Article> spec4 = querySpecificationGreaterThanOrEqual(fromDate, "publishedAt");
+        Specification<Article> spec5 = querySpecificationLessThanOrEqual(toDate, "publishedAt");
 
-        Page<Article> articles = articleRepository.findAll(pageable);
+        // Concat each specification
+        Specification<Article> spec = Specification.where(spec1).or(spec2).or(spec3).and(spec4).and(spec5);
 
-        return ResponseEntity.status(HttpStatus.OK).body(
-                articles.get().map(s->s.toDto()).collect(Collectors.toList()));
+        Page<Article> articlesPage = articleRepository
+                .findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+
+        GenericPage<ArticleDto> genericPage = new GenericPage<>();
+        genericPage.setData(articlesPage.stream().map(s->s.toDto()).collect(Collectors.toList()));
+        BeanUtils.copyProperties(articlesPage, genericPage);
+
+        return ResponseEntity.status(HttpStatus.OK).body(genericPage);
     }
 
 

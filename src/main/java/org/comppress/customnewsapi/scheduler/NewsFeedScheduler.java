@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.comppress.customnewsapi.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +13,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableScheduling
 @Slf4j
 public class NewsFeedScheduler {
+
+    @Value("${scheduler.enabled}")
+    private boolean enabled;
 
     private final ArticleService articleService;
 
@@ -25,7 +29,11 @@ public class NewsFeedScheduler {
     @SchedulerLock(name = "newsFeedingScheduler")
     public void saveNewsFeed(){
         log.info("Scheduler feeding data!");
-        articleService.fetchArticles();
+
+        if (enabled){
+            articleService.fetchArticles();
+        }
+
     }
 
 }

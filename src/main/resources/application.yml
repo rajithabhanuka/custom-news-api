@@ -14,5 +14,6 @@ server:
   servlet:
     context-path: /news-api
 scheduler:
+  enabled: false
   triggeringIntervalMilliSeconds: 20000
   initialDelayIntervalMilliSeconds: 5000
