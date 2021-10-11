@@ -20,12 +20,13 @@ public class NewsFeedScheduler {
         this.articleService = articleService;
     }
 
+
     @Scheduled(fixedDelayString = "${scheduler.triggeringIntervalMilliSeconds}",
             initialDelayString = "${scheduler.initialDelayIntervalMilliSeconds}")
     @SchedulerLock(name = "newsFeedingScheduler")
     public void saveNewsFeed(){
         log.info("Scheduler feeding data!");
-        articleService.fetchArticles();
+        articleService.fetchArticlesWithRome();
     }
 
 }

@@ -14,14 +14,16 @@ public class Article extends AbstractEntity{
 
     private String author;
     private String title;
+    @Column(length = 65536 * 64)
     private String description;
-    @Column(unique = true)
+    @Column(unique = true, columnDefinition = "TEXT")
     private String url;
-    private String urlToImage; // done
-    @Column(unique = true)
-    private String guid; // done
+    @Column(columnDefinition = "TEXT")
+    private String urlToImage;
+    @Column(unique = true, columnDefinition = "TEXT")
+    private String guid;
     private LocalDateTime publishedAt;
-    private String content; // done
-    @ManyToOne
-    private RssFeed rssFeed;
+    @Column(length = 65536 * 64)
+    private String content;
+    private Long rssFeedId;
 }
