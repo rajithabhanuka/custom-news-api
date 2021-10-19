@@ -9,6 +9,18 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  mail:
+    host: smtp.gmail.com
+    username: covidtesting.noreply@gmail.com
+    password: covidtesting@2020
+    port: 25
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    protocol: smtp
 server:
   port: 8080
   servlet:
