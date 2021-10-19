@@ -16,3 +16,4 @@ server:
 scheduler:
   triggeringIntervalMilliSeconds: 20000
   initialDelayIntervalMilliSeconds: 5000
+  enabled: false

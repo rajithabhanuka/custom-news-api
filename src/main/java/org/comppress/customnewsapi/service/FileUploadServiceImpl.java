@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.exceptions.FileImportException;
+import org.comppress.customnewsapi.repository.CategoryRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +34,13 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     private final RssFeedRepository rssFeedRepository;
     private final PublisherRepository publisherRepository;
+    private final CategoryRepository categoryRepository;
 
     @Autowired
-    public FileUploadServiceImpl(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository) {
+    public FileUploadServiceImpl(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.publisherRepository = publisherRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Transactional
@@ -70,13 +74,14 @@ public class FileUploadServiceImpl implements FileUploadService {
             if(publisher == null){
                 publisher = new Publisher(record.get(SOURCE));
             }
+            Category category = categoryRepository.findByName(record.get(CATEGORY));
+
             rssFeedList.add(RssFeed.builder()
-                    .publisher(publisher)
-                    .category(record.get(CATEGORY))
+                    .publisherId(publisher.getId())
+                    .categoryId(category.getId())
                     .url(record.get(LINK)).build());
         });
 
         return rssFeedList;
     }
-
 }

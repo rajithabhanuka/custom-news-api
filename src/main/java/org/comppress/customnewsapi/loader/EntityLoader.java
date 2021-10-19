@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.json.PublisherDto;
 import org.comppress.customnewsapi.dto.json.RootDto;
+import org.comppress.customnewsapi.dto.xml.RssDto;
+import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.RssFeed;
+import org.comppress.customnewsapi.repository.CategoryRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +24,15 @@ import java.io.IOException;
 @Slf4j
 public class EntityLoader implements ApplicationRunner {
 
-    RssFeedRepository rssFeedRepository;
-    PublisherRepository publisherRepository;
+    private final RssFeedRepository rssFeedRepository;
+    private final PublisherRepository publisherRepository;
+    private final CategoryRepository categoryRepository;
 
     @Autowired
-    public EntityLoader(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository) {
+    public EntityLoader(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.publisherRepository = publisherRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -43,19 +48,30 @@ public class EntityLoader implements ApplicationRunner {
         }
         int counterPublisher = 0;
         int counterRssFeed = 0;
-        for (PublisherDto publisher : jsonModel.getPublisherDtos()) {
+        int counterCategory = 0;
+        for (PublisherDto publisherDto : jsonModel.getPublisherDtos()) {
             // Create Publisher
-            if (!publisherRepository.existsByName(publisher.getPublisher())) {
+            if (!publisherRepository.existsByName(publisherDto.getPublisher())) {
+                publisherRepository.save(new Publisher(publisherDto.getPublisher()));
                 counterPublisher++;
-                publisherRepository.save(new Publisher(publisher.getPublisher()));
             }
+            // Create Category
+            if(!categoryRepository.existsByName(publisherDto.getCategory())){
+                categoryRepository.save(new Category(publisherDto.getCategory()));
+                counterCategory++;
+            }
+
             // Create RssFeed
-            if (!rssFeedRepository.existsByUrl(publisher.getRSSFeed())) {
+            if (!rssFeedRepository.existsByUrl(publisherDto.getRSSFeed())) {
+                RssFeed rssFeed = RssFeed.builder()
+                        .categoryId(categoryRepository.findByName(publisherDto.getCategory()).getId())
+                        .publisherId(publisherRepository.findByName(publisherDto.getPublisher()).getId())
+                        .build();
+                rssFeedRepository.save(rssFeed);
                 counterRssFeed++;
-                rssFeedRepository.save(new RssFeed(publisher.getRSSFeed(), publisherRepository.findByName(publisher.getPublisher()), publisher.getCategory()));
             }
         }
-        log.info("Created " + counterPublisher + " Publisher and " + counterRssFeed + " Rss Feed");
+        log.info("Created " + counterPublisher + " Publisher, " + counterCategory + " Categories and " + counterRssFeed + " Rss Feed");
         log.info("Exiting Entity Loader now");
 
     }
