@@ -21,7 +21,15 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             "(:publisherName is null or :publisherName = '' or p.name=:publisherName) AND " +
             "(:title is null or :title = '' or at.title=:title) AND " +
             "at.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND " +
-            "IFNULL(:toDate,now())"
+            "IFNULL(:toDate,now())",
+            countQuery = "SELECT count(*) FROM article at JOIN rss_feed rf on rf.id = at.rss_feed_id " +
+                    "JOIN publisher p on p.id = rf.publisher_id " +
+                    "JOIN category c on c.id = rf.category_id WHERE " +
+                    "(:category is null or :category = '' or c.name=:category) AND " +
+                    "(:publisherName is null or :publisherName = '' or p.name=:publisherName) AND " +
+                    "(:title is null or :title = '' or at.title=:title) AND " +
+                    "at.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND " +
+                    "IFNULL(:toDate,now())"
             , nativeQuery = true)
     Page<Article> retrieveByCategoryOrPublisherName(@Param("category") String category,
                                                     @Param("publisherName") String publisherName,
