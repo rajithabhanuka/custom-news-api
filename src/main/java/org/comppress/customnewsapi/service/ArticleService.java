@@ -129,7 +129,8 @@ public class ArticleService implements BaseSpecification {
 
         Page<Article> articlesPage = articleRepository
                 .retrieveByCategoryOrPublisherName(category,
-                        publisherNewsPaper, title, dateTime1, dateTime2,
+                        publisherNewsPaper, title,
+                        dateTime1, dateTime2,
                         PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
 //        Page<Article> articlesPage = articleRepository
