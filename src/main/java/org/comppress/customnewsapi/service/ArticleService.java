@@ -29,7 +29,10 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -67,13 +70,13 @@ public class ArticleService implements BaseSpecification {
                     try {
                         articleRepository.save(article);
                     } catch (DataIntegrityViolationException e) {
-                        log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
+                        log.error("Duplicate Record found while saving data {}" , e.getLocalizedMessage());
                     } catch (Exception e) {
-                        log.error("Error while saving data {}", e.getLocalizedMessage());
+                        log.error("Error while saving data {}" , e.getLocalizedMessage());
                     }
                 });
             } catch (Exception e) {
-                log.error("Error while converting data from xml {}", e.getLocalizedMessage());
+                log.error("Error while converting data from xml {}" , e.getLocalizedMessage());
             }
         }
 
@@ -94,10 +97,11 @@ public class ArticleService implements BaseSpecification {
     }
 
     public ResponseEntity<GenericPage> getArticles(int page, int size,
-                                                        String title, String category,
-                                                        String publisherNewsPaper,
-                                                        String fromDate, String toDate){
+                                                   String title, String category,
+                                                   String publisherNewsPaper,
+                                                   String fromDate, String toDate) {
 
+        /*
         // Building query according to the arguments
         Specification<Article> spec1 = querySpecificationLike(title, "title");
         Specification<Article> spec2 = querySpecificationLike(category, "description");
@@ -107,12 +111,32 @@ public class ArticleService implements BaseSpecification {
 
         // Concat each specification
         Specification<Article> spec = Specification.where(spec1).or(spec2).or(spec3).and(spec4).and(spec5);
+*/
+
+        LocalDateTime dateTime1 = null;
+        LocalDateTime dateTime2 = null;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        if (fromDate != null){
+            dateTime1 = LocalDateTime.parse(fromDate, formatter);
+        }
+
+        if (toDate != null){
+            dateTime2 = LocalDateTime.parse(toDate, formatter);
+        }
+
 
         Page<Article> articlesPage = articleRepository
-                .findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+                .retrieveByCategoryOrPublisherName(category,
+                        publisherNewsPaper, title, dateTime1, dateTime2,
+                        PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+
+//        Page<Article> articlesPage = articleRepository
+//                .findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(s->s.toDto()).collect(Collectors.toList()));
+        genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
