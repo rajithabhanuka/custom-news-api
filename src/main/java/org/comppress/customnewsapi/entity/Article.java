@@ -18,11 +18,11 @@ public class Article extends AbstractEntity{
     private String title;
     @Column(length = 65536 * 64)
     private String description;
-    @Column(unique = true, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String url;
     @Column(columnDefinition = "TEXT")
     private String urlToImage;
-    @Column(unique = true, columnDefinition = "TEXT")
+    //@Column(unique = true, columnDefinition = "TEXT", length = 65536 * 3000)
     private String guid;
     private LocalDateTime publishedAt;
     @Column(length = 65536 * 64)

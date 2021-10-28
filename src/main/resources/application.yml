@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/comppress?allowPublicKeyRetrieval=true
+    url: jdbc:mysql://127.0.0.1:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: root
     password: secret
   jpa:
@@ -9,11 +9,25 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+  mail:
+    host: smtp.mailbox.org
+    username: no-reply@comppress.org
+    password: juFTDL942i8Y
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    protocol: smtp
 server:
   port: 8080
   servlet:
-    context-path: /news-api
+    context-path: /custom-news-api
 scheduler:
   triggeringIntervalMilliSeconds: 20000
   initialDelayIntervalMilliSeconds: 5000
   enabled: false
+jwt:
+  secret: secret

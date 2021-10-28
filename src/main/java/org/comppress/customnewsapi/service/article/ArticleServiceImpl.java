@@ -1,15 +1,13 @@
-package org.comppress.customnewsapi.service;
+package org.comppress.customnewsapi.service.article;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.ParsingFeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
@@ -20,13 +18,13 @@ import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
+import org.comppress.customnewsapi.service.BaseSpecification;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -42,6 +40,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +49,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class ArticleServiceImpl implements ArticleService, BaseSpecification{
+public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
     private final RssFeedRepository rssFeedRepository;
     private final MapstructMapper mapstructMapper;
@@ -220,24 +219,33 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification{
                                                    String title, String category,
                                                    String publisherNewsPaper,
                                                    String fromDate, String toDate){
-        // Building query according to the arguments
-        Specification<Article> spec1 = querySpecificationLike(title, "title");
-        Specification<Article> spec2 = querySpecificationLike(category, "description");
-        Specification<Article> spec3 = querySpecificationLike(publisherNewsPaper, "author");
-        Specification<Article> spec4 = querySpecificationGreaterThanOrEqual(fromDate, "publishedAt");
-        Specification<Article> spec5 = querySpecificationLessThanOrEqual(toDate, "publishedAt");
 
-        // Concat each specification
-        Specification<Article> spec = Specification.where(spec1).or(spec2).or(spec3).and(spec4).and(spec5);
+        LocalDateTime dateTime1 = null;
+        LocalDateTime dateTime2 = null;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        if (fromDate != null){
+            dateTime1 = LocalDateTime.parse(fromDate, formatter);
+        }
+
+        if (toDate != null){
+            dateTime2 = LocalDateTime.parse(toDate, formatter);
+        }
 
         Page<Article> articlesPage = articleRepository
-                .findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+                .retrieveByCategoryOrPublisherName(category,
+                        publisherNewsPaper, title,
+                        dateTime1, dateTime2,
+                        PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(s->s.toDto()).collect(Collectors.toList()));
+        genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
+
     }
+
 
 }

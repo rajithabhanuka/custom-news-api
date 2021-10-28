@@ -4,6 +4,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public interface BaseSpecification {
 
@@ -46,16 +48,11 @@ public interface BaseSpecification {
      * Entered date less than or equals to date in the db
      */
     default <T> Specification<T> querySpecificationLessThanOrEqual(String value, String column) {
-        return (root, query, builder) ->
-        {
-            try {
-                return value == null || value.isEmpty() ?
-                        builder.conjunction() :
-                        builder.lessThanOrEqualTo(root.get(column),  new SimpleDateFormat("yyyy-MM-dd").parse(value));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            return null;
+        return (root, query, builder) -> {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return value == null || value.isEmpty() ?
+                    builder.conjunction() :
+                    builder.lessThanOrEqualTo(root.get(column),  LocalDateTime.parse(value, formatter));
         };
     }
 
@@ -67,14 +64,10 @@ public interface BaseSpecification {
     default <T> Specification<T> querySpecificationGreaterThanOrEqual(String value, String column) {
         return (root, query, builder) ->
         {
-            try {
-                return value == null || value.isEmpty() ?
-                        builder.conjunction() :
-                        builder.greaterThanOrEqualTo(root.get(column), new SimpleDateFormat("yyyy-MM-dd").parse(value));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            return null;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return value == null || value.isEmpty() ?
+                    builder.conjunction() :
+                    builder.greaterThanOrEqualTo(root.get(column), LocalDateTime.parse(value, formatter));
         };
     }
 

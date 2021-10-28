@@ -64,6 +64,7 @@ public class EntityLoader implements ApplicationRunner {
             // Create RssFeed
             if (!rssFeedRepository.existsByUrl(publisherDto.getRSSFeed())) {
                 RssFeed rssFeed = RssFeed.builder()
+                        .url(publisherDto.getRSSFeed())
                         .categoryId(categoryRepository.findByName(publisherDto.getCategory()).getId())
                         .publisherId(publisherRepository.findByName(publisherDto.getPublisher()).getId())
                         .build();

@@ -1,4 +1,4 @@
-package org.comppress.customnewsapi.service;
+package org.comppress.customnewsapi.service.article;
 
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.springframework.http.ResponseEntity;

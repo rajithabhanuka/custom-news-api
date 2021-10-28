@@ -1,4 +1,4 @@
-package org.comppress.customnewsapi.service;
+package org.comppress.customnewsapi.service.fileupload;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
