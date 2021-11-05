@@ -10,6 +10,10 @@ public interface ArticleService {
                                             String publisherNewsPaper,
                                             String fromDate, String toDate);
 
-    void fetchArticles();
+    // TODO ? void fetchArticles();
 
+    ResponseEntity<GenericPage> getRatedArticles(int page, int size,
+                                                 String title, String category,
+                                                 String publisherNewsPaper,
+                                                 String fromDate, String toDate);
 }

@@ -19,6 +19,7 @@ import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.service.BaseSpecification;
+import org.comppress.customnewsapi.utils.DateUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -245,6 +246,15 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
 
+    }
+
+    @Override
+    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
+
+        DateUtils.stringToLocalDateTime(fromDate);
+        DateUtils.stringToLocalDateTime(toDate);
+
+        return null;
     }
 
 

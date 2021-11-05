@@ -23,5 +23,7 @@ public class ArticleDto {
 
     private String content;
 
+    private Integer countRatings;
+
 
 }

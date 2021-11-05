@@ -1,6 +1,9 @@
 package org.comppress.customnewsapi.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.RatingDto;
 import org.springframework.beans.BeanUtils;
@@ -9,6 +12,9 @@ import javax.persistence.Entity;
 
 @Data
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Rating extends AbstractEntity{
 
     private Integer rating1;
