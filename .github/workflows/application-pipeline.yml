@@ -30,7 +30,7 @@ jobs:
     - name: Login to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
-      run: docker push ghcr.io/lukonjun/hello-world:${{ github.run_id }}
+      run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
       
   deploy-to-infrastructure:
     runs-on: ubuntu-latest
