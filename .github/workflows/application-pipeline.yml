@@ -47,9 +47,9 @@ jobs:
     - name: add Variables to all.yml
       working-directory: ./ansible
       run: |
-        echo "image: ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}" >> ansible/group_vars/all
-        echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> ansible/group_vars/all
-        cat ansible/group_vars/all
+        echo "image: ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}" >> group_vars/all
+        echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> group_vars/all
+        cat group_vars/all
         
     - name: run ansible script 
       run: ansible-playbook deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }} image_name=ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}"
