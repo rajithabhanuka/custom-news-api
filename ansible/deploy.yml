@@ -1,4 +1,4 @@
-- hosts: 116.203.48.76
+- hosts: app
   become: yes
   vars:
     image_name: ghcr.io/lukonjun/custom-news-api:1400535998
@@ -12,5 +12,6 @@
         src: docker-compose.yml.j2
         dest: /etc/docker-compose.yml
     - name: run container
-      chdir: /etc
-      shell: docker-compose up -d
+      shell:
+        cmd: docker-compose up -d
+        chdir: /etc
