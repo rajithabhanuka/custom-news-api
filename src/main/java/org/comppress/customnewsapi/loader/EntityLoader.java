@@ -38,7 +38,14 @@ public class EntityLoader implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws IOException {
         // https://stackoverflow.com/questions/44399422/read-file-from-resources-folder-in-spring-boot
-        File file = new ClassPathResource("json/news-feeds.json").getFile();
+        File file = null;
+        try {
+            file = new ClassPathResource("json/news-feeds.json").getFile();
+        }catch (IOException e){
+            log.error("Cant read RSS feeds from json");
+            e.printStackTrace();
+            return;
+        }
         RootDto jsonModel = null;
         try {
             ObjectMapper mapper = new ObjectMapper();

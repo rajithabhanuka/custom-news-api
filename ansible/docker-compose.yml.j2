@@ -4,14 +4,16 @@ news-api:
     - mysql:mysql
   environment:
     SERVER_PORT: 80
+    SPRING_DATASOURCE_PASSWORD: {{ password }}
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
   ports:
     - "0.0.0.0:80:80"
 mysql:
   image: mysql
   restart: unless-stopped
   environment:
-    - MYSQL_ROOT_PASSWORD={{ password }}
-    - MYSQL_DATABASE=comppress
+    MYSQL_ROOT_PASSWORD: {{ password }}
+    MYSQL_DATABASE: comppress
   volumes:
     - /etc/timezone:/etc/timezone:ro
     - /etc/localtime:/etc/localtime:ro
