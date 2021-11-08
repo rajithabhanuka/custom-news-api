@@ -44,6 +44,13 @@ jobs:
         touch ~/.ssh/id_rsa
         echo '${{ secrets.STAGE_PRIVATE_KEY }}' >> ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+    - name: add Variables to all.yml
+      working-directory: ./ansible
+      run: |
+        echo "image: ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}" >> ansible/group_vars/all
+        echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> ansible/group_vars/all
+        cat ansible/group_vars/all
+        
     - name: run ansible script 
-      run: ansible-playbook -i host.ini deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }} image_name=ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}"
+      run: ansible-playbook deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }} image_name=ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}"
       working-directory: ./ansible
