@@ -51,5 +51,5 @@ jobs:
         echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> group_vars/all
         cat group_vars/all
     - name: run ansible script
-      run: ansible-playbook -i host.ini deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }}"
+      run: ansible-playbook -i hosts.ini deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }}"
       working-directory: ./ansible
