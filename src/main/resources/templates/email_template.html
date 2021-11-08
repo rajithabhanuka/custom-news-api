@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${subject}"></title>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+
+<body>
+
+<p style="font-style: italic;">Forget Password Email</p>
+
+<table>
+
+    <tr>
+        <th>Please use this OTP</th>
+        <th>Date</th>
+    </tr>
+    <tr>
+        <td><p th:text="${otp}"></p></td>
+        <td><p th:text="${date}"></p></td>
+    </tr>
+</table>
+
+</body>
+</html>

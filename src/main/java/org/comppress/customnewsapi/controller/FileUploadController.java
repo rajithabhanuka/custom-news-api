@@ -1,7 +1,7 @@
 package org.comppress.customnewsapi.controller;
 
 import org.comppress.customnewsapi.entity.RssFeed;
-import org.comppress.customnewsapi.service.FileUploadService;
+import org.comppress.customnewsapi.service.fileupload.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

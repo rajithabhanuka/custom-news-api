@@ -1,4 +1,4 @@
-package org.comppress.customnewsapi.service;
+package org.comppress.customnewsapi.service.fileupload;
 
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.springframework.http.ResponseEntity;
