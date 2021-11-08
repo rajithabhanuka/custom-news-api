@@ -7,7 +7,10 @@
   tasks:
     - name: login to github registry
       shell: "docker login -u {{ username }} -p {{ token }} ghcr.io"
-    - name: delete if existing
-      shell: docker rm -f greetings-application 2>&1 >/dev/null
+    - name: template docker compose file
+      template:
+        src: docker-compose.yml.j2
+        dest: /etc/docker-compose.yml
     - name: run container
-      shell: "docker run -p 80:80 -d -e SERVER_PORT='80' --name greetings-application {{ image_name }}"
+      chdir: /etc
+      shell: docker-compose up -d

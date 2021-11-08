@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths:
     - src/**
-    - docker-compose.yml
+    - docker-compose.yml.j2
     - Dockerfile
   pull_request:
     branches: [main]
     paths:
     - hello-world/**
-    - docker-compose.yml
+    - docker-compose.yml.j2
     - Dockerfile
 
 jobs:

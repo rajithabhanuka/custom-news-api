@@ -1,5 +1,5 @@
 news-api:
-  image: ${IMAGE}
+  image: {{ image }}
   links:
     - mysql:mysql
   environment:
@@ -10,7 +10,7 @@ mysql:
   image: mysql
   restart: unless-stopped
   environment:
-    - MYSQL_ROOT_PASSWORD=${PASSWORD}
+    - MYSQL_ROOT_PASSWORD={{ password }}
     - MYSQL_DATABASE=comppress
   volumes:
     - /etc/timezone:/etc/timezone:ro
