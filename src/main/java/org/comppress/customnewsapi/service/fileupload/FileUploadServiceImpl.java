@@ -21,6 +21,7 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,10 +52,20 @@ public class FileUploadServiceImpl implements FileUploadService {
         
         List<CSVRecord> csvRecordList = getRecords(file);
         List<RssFeed> rssFeedList = getRssFeeds(csvRecordList);
+        List<RssFeed> finalRssFeedList = new ArrayList<>();
+        // TODO Also update Feeds
+        for(RssFeed rssFeed:rssFeedList){
+            if(rssFeedRepository.findByUrl(rssFeed.getUrl()).isEmpty()) finalRssFeedList.add(rssFeed);
+        }
 
-        rssFeedRepository.saveAll(rssFeedList);
+        try{
+            rssFeedRepository.saveAll(finalRssFeedList);
+        }catch(Exception e){
+            e.printStackTrace();
+            //TODO Logging
+        }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(rssFeedList);
+        return ResponseEntity.status(HttpStatus.CREATED).body(finalRssFeedList);
     }
 
     private List<CSVRecord> getRecords(MultipartFile file) {
@@ -69,18 +80,22 @@ public class FileUploadServiceImpl implements FileUploadService {
     private List<RssFeed> getRssFeeds(List<CSVRecord> csvRecordList) {
         List<RssFeed> rssFeedList = new ArrayList<>();
 
-        csvRecordList.forEach(record -> {
+        for(CSVRecord record:csvRecordList){
             Publisher publisher = publisherRepository.findByName(record.get(SOURCE));
             if(publisher == null){
                 publisher = new Publisher(record.get(SOURCE));
+                publisherRepository.save(publisher);
             }
             Category category = categoryRepository.findByName(record.get(CATEGORY));
-
+            if(category == null){
+                category = new Category(record.get(CATEGORY));
+                categoryRepository.save(category);
+            }
             rssFeedList.add(RssFeed.builder()
                     .publisherId(publisher.getId())
                     .categoryId(category.getId())
                     .url(record.get(LINK)).build());
-        });
+        }
 
         return rssFeedList;
     }
