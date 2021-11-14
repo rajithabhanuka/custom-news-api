@@ -37,6 +37,8 @@ public class EntityLoader implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
+        boolean tmp = true;
+        if(tmp) return;
         // https://stackoverflow.com/questions/44399422/read-file-from-resources-folder-in-spring-boot
         File file = null;
         try {
