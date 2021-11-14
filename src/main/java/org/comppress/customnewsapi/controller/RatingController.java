@@ -22,5 +22,4 @@ public class RatingController {
     public ResponseEntity<RatingDto> submitRating(@RequestBody SubmitRatingDto submitRatingDto, @RequestHeader(name="Authorization") String token){
         return ratingService.submitRating(submitRatingDto, token);
     }
-
 }

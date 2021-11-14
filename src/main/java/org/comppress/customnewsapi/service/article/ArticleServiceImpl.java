@@ -11,11 +11,14 @@ import com.rometools.rome.io.XmlReader;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
+import org.comppress.customnewsapi.dto.RatingSumDto;
 import org.comppress.customnewsapi.dto.xml.ItemDto;
 import org.comppress.customnewsapi.entity.Article;
+import org.comppress.customnewsapi.entity.Rating;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
+import org.comppress.customnewsapi.repository.RatingRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.service.BaseSpecification;
@@ -42,10 +45,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,12 +55,14 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     private final RssFeedRepository rssFeedRepository;
     private final MapstructMapper mapstructMapper;
     private final ArticleRepository articleRepository;
+    private final RatingRepository ratingRepository;
 
     @Autowired
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, MapstructMapper mapstructMapper, ArticleRepository articleRepository) {
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, MapstructMapper mapstructMapper, ArticleRepository articleRepository, RatingRepository ratingRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.mapstructMapper = mapstructMapper;
         this.articleRepository = articleRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     public void fetchArticlesWithRome() {
@@ -248,14 +250,141 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
     }
 
+    // TODO Add Parameter for Category, ... and so on
+    public ResponseEntity<GenericPage> getRatedArticles(int page, int size){
+
+        // TODO Should we really return a Page here?
+        // TODO Needs to be sorted that the Article with the highest Rating is at the TOp Performance?
+        Page<Article> articlesPage = articleRepository.retrieveAllRatedArticles(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+        List<ArticleDto> articleDtoArrayList = new ArrayList<>();
+        for(Article article:articlesPage.toList()){
+            // TODO Is there a way to make this more dynamic and not so static, pass a List of Criteria Ids?
+            // Get average for each Criterion
+            Double sumCriteria1 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),0L);
+            Double sumCriteria2 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),1L);
+            Double sumCriteria3 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),2L);
+            // TODO Calculate Sum, Ignore if 0
+            Double average = (sumCriteria1 + sumCriteria2 + sumCriteria3) / 3.0;
+            // add to RatingSumDto
+            ArticleDto articleDto = article.toDto();
+            RatingSumDto ratingSumDto = RatingSumDto.builder()
+                    .criteriaRatingSum1(sumCriteria1)
+                    .criteriaRatingSum2(sumCriteria2)
+                    .criteriaRatingSum3(sumCriteria3)
+                    .ratingSum(average)
+                    .build();
+            articleDto.setRatingSumPojo(ratingSumDto);
+            articleDtoArrayList.add(articleDto);
+        }
+
+        // Sorting Here
+
+        GenericPage<ArticleDto> genericPage = new GenericPage<>();
+
+        genericPage.setData(articleDtoArrayList);
+        BeanUtils.copyProperties(articlesPage, genericPage);
+
+        return ResponseEntity.status(HttpStatus.OK).body(genericPage);
+    }
+
+    private RatingSumDto calculateRating(List<Rating> ratingList) {
+        for(Rating rating:ratingList){
+
+        }
+
+        return new RatingSumDto().builder().build();
+    }
+
     @Override
     public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
 
-        DateUtils.stringToLocalDateTime(fromDate);
-        DateUtils.stringToLocalDateTime(toDate);
+        LocalDateTime fromDateLocal = DateUtils.stringToLocalDateTime(fromDate);
+        LocalDateTime toDateLocal = DateUtils.stringToLocalDateTime(toDate);
+
+        List<Article> listArticle = articleRepository.retrieveRatedArticlesByCategoryOrPublisherName(category,publisherNewsPaper,title,fromDateLocal,toDateLocal);
+        // Generate Set of Article Ids
+        HashSet<Long> longHashSet = new HashSet<>();
+        for(Article article:listArticle){
+            longHashSet.add(article.getId());
+        }
+        // Get Ratings for all Articles
+        List<List<Rating>> listRating = new ArrayList<>();
+        for(Long id:longHashSet){
+            ratingRepository.findByArticleId(id);
+        }
+        // Calculate
+
+        // Build Return Object with the necessary Information
 
         return null;
     }
 
+    /*
+    public RatingSumDto caculateRating(List<Rating> ratingList){
+        int sum = 0;
+        for(Rating rating: ratingList){
+            int counterRatingMissing = 0;
+            int averageRating = 0;
+
+            if(rating.getRating1() != null || rating.getRating1() != 0){
+                counterRatingMissing++;
+                averageRating = averageRating + rating.getRating1();
+            }
+
+            if(rating.getRating2() != null || rating.getRating2() != 0){
+                counterRatingMissing++;
+                averageRating = averageRating + rating.getRating2();
+            }
+
+            if(rating.getRating1() != null || rating.getRating1() != 0){
+                counterRatingMissing++;
+                averageRating = averageRating + rating.getRating3();
+            }
+
+            if(counterRatingMissing > 2){
+                log.error("This should not be possible");
+            }else{
+                if(counterRatingMissing == 0){
+                    averageRating += averageRating /3;
+                } else if(counterRatingMissing == 1) {
+                    averageRating += averageRating/2;
+                }
+                sum += averageRating;
+            }
+        }
+        int sumRating1 = 0;
+        int sumRating2 = 0;
+        int sumRating3 = 0;
+        int localCounterSumRating1 = 0;
+        int localCounterSumRating2 = 0;
+        int localCounterSumRating3 = 0;
+        for(Rating rating:ratingList){
+            if(rating.getRating1() != null || rating.getRating1() != 0){
+                localCounterSumRating1++;
+                sumRating1 += rating.getRating1();
+            }
+
+            if(rating.getRating2() != null || rating.getRating2() != 0){
+                localCounterSumRating2++;
+                sumRating2 += rating.getRating2();
+            }
+
+            if(rating.getRating2() != null || rating.getRating2() != 0){
+                localCounterSumRating2++;
+                sumRating2 += rating.getRating2();
+            }
+        }
+
+
+        RatingSumDto ratingSumDto = RatingSumDto.builder()
+                .rating1Sum((double) sumRating1/localCounterSumRating1)
+                .rating2Sum((double) sumRating2/localCounterSumRating2)
+                .rating3Sum((double) sumRating3/localCounterSumRating3)
+                .ratingSum((double) sum/ratingList.size())
+                .build();
+
+        return ratingSumDto;
+        }
+        */
 
 }

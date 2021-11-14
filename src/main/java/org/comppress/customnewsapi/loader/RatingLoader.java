@@ -33,18 +33,22 @@ public class RatingLoader implements ApplicationRunner {
         } else {
             articleList = articleRepository.findAll();
         }
-        int numberRandomRatings = 50;
+        int numberRandomRatings = 1000;
         Random random = new Random();
         for (int i = 0; i < numberRandomRatings; i++) {
             Article article = articleList.get(random.nextInt(articleList.size()));
-            Rating rating = new Rating().builder()
-                    .rating1(random.nextInt(5) + 1)
-                    .rating2(random.nextInt(5) + 1)
-                    .rating3(random.nextInt(5) + 1)
-                    .articleId(article.getId())
-                    .build();
+            // 3 Rating Criteria
+            for(long j = 0; j < 3; j++){
 
-            ratingRepository.save(rating);
+                // TODO Implement Randomness, should be sometimes not filled, 0 or null, but one needs to be definitly set
+                Rating rating = Rating.builder()
+                        .userId(-1L)
+                        .criteriaId(j)
+                        .articleId(article.getId())
+                        .rating(random.nextInt(5) + 1)
+                        .build();
+                ratingRepository.save(rating);
+            }
         }
     }
 }

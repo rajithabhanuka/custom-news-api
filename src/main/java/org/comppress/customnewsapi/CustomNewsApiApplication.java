@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @Slf4j
-public class CustomNewsApiApplication {
+public class
+CustomNewsApiApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CustomNewsApiApplication.class, args);
