@@ -83,19 +83,18 @@ public class RatingServiceImpl implements RatingService {
                         .build();
                 ratingRepository.save(newRating);
             }
-
-            Optional<Article> article = articleRepository.findById(submitRatingDto.getArticleId());
-            if(article.isPresent()){
-                Integer countRatings = article.get().getCountRatings();
-                if(countRatings == null) countRatings = 0;
-                countRatings = countRatings + 1;
-                article.get().setCountRatings(countRatings);
-                articleRepository.save(article.get());
-            }else{
-                throw new Exception("Article does not Exist! Cant Increment Rating for Article");
-            }
-
         }
+        Optional<Article> article = articleRepository.findById(submitRatingDto.getArticleId());
+        if(article.isPresent()){
+            Integer countRatings = article.get().getCountRatings();
+            if(countRatings == null) countRatings = 0;
+            countRatings = countRatings + 1;
+            article.get().setCountRatings(countRatings);
+            articleRepository.save(article.get());
+        }else{
+            throw new Exception("Article does not Exist! Cant Increment Rating for Article");
+        }
+
         // TODO return State of the DB, or saved state
         return ResponseEntity.status(HttpStatus.CREATED).body(null);
     }
