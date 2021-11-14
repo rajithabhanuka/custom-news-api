@@ -28,6 +28,7 @@ public class Article extends AbstractEntity{
     @Column(length = 65536 * 64)
     private String content;
     private Long rssFeedId;
+    @Column(columnDefinition = "integer default 0")
     private Integer countRatings;
 
     public ArticleDto toDto(){

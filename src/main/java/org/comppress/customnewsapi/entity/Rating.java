@@ -8,8 +8,11 @@ import org.comppress.customnewsapi.dto.RatingDto;
 import org.springframework.beans.BeanUtils;
 
 import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 @Data
+@Table(indexes = @Index(columnList = "articleId,criteriaId"))
 @Entity
 @Builder
 @NoArgsConstructor

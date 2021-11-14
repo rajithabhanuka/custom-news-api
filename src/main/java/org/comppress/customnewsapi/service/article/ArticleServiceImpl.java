@@ -25,6 +25,7 @@ import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -73,14 +74,13 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
                 SyndFeedInput input = new SyndFeedInput();
                 feed = input.build(new XmlReader(feedSource));
                 log.info("Fetching News from " + rssFeed.getUrl());
-            } catch (ParsingFeedException e){
+            } catch (ParsingFeedException e) {
                 log.error("Feed can not be parsed, please recheck the url " + rssFeed.getUrl());
                 continue;
-            } catch (FileNotFoundException e){
-                log.error("FileNotFoundException most likely a dead link, check the url " +  rssFeed.getUrl());
+            } catch (FileNotFoundException e) {
+                log.error("FileNotFoundException most likely a dead link, check the url " + rssFeed.getUrl());
                 continue;
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
                 continue;
             } catch (FeedException e) {
@@ -89,16 +89,16 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             } catch (IOException e) {
                 e.printStackTrace();
                 continue;
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 continue;
             }
 
 
             log.info("Feed of size " + feed.getEntries().size());
-            for(SyndEntry syndEntry:feed.getEntries()){
+            for (SyndEntry syndEntry : feed.getEntries()) {
                 Article article = customMappingSyndEntryImplToArticle(syndEntry, rssFeed);
-                if(articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
+                if (articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
                 try {
                     articleRepository.save(article);
                 } catch (DataIntegrityViolationException e) {
@@ -110,37 +110,37 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
     }
 
-    public Article customMappingSyndEntryImplToArticle(SyndEntry syndEntry, RssFeed rssFeed){
+    public Article customMappingSyndEntryImplToArticle(SyndEntry syndEntry, RssFeed rssFeed) {
         Article article = new Article();
-        if(syndEntry.getAuthor() != null){
+        if (syndEntry.getAuthor() != null) {
             article.setAuthor(syndEntry.getAuthor());
         }
-        if(syndEntry.getTitle() != null){
+        if (syndEntry.getTitle() != null) {
             article.setTitle(syndEntry.getTitle());
         }
-        if(syndEntry.getDescription() != null){
+        if (syndEntry.getDescription() != null) {
             article.setDescription(syndEntry.getDescription().getValue());
         }
-        if(syndEntry.getLink() != null){
+        if (syndEntry.getLink() != null) {
             article.setUrl(syndEntry.getLink());
         }
-        if(syndEntry.getEnclosures() != null && !syndEntry.getEnclosures().isEmpty()){
+        if (syndEntry.getEnclosures() != null && !syndEntry.getEnclosures().isEmpty()) {
             article.setUrlToImage(syndEntry.getEnclosures().get(0).getUrl());
-        } else{
+        } else {
             // User Dom Parser to check for the Image
             article.setUrlToImage("No Image Found");
         }
 
         // Sometimes the url, sometimes guid provided by the news agencies
-        if(syndEntry.getUri() != null){
+        if (syndEntry.getUri() != null) {
             article.setGuid(syndEntry.getUri());
         }
-        if(syndEntry.getPublishedDate() != null){
+        if (syndEntry.getPublishedDate() != null) {
             article.setPublishedAt(syndEntry.getPublishedDate().toInstant()
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime());
         }
-        if(syndEntry.getContents() != null && !syndEntry.getContents().isEmpty()){
+        if (syndEntry.getContents() != null && !syndEntry.getContents().isEmpty()) {
             article.setContent(syndEntry.getContents().get(0).getValue());
         }
         article.setRssFeedId(rssFeed.getId());
@@ -218,28 +218,12 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return response.body();
     }
 
-    public ResponseEntity<GenericPage> getArticles(int page, int size,
-                                                   String title, String category,
-                                                   String publisherNewsPaper,
-                                                   String fromDate, String toDate){
-
-        LocalDateTime dateTime1 = null;
-        LocalDateTime dateTime2 = null;
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        if (fromDate != null){
-            dateTime1 = LocalDateTime.parse(fromDate, formatter);
-        }
-
-        if (toDate != null){
-            dateTime2 = LocalDateTime.parse(toDate, formatter);
-        }
+    public ResponseEntity<GenericPage> getArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
 
         Page<Article> articlesPage = articleRepository
                 .retrieveByCategoryOrPublisherName(category,
                         publisherNewsPaper, title,
-                        dateTime1, dateTime2,
+                        DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate),
                         PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
@@ -250,141 +234,28 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
     }
 
-    // TODO Add Parameter for Category, ... and so on
-    public ResponseEntity<GenericPage> getRatedArticles(int page, int size){
-
-        // TODO Should we really return a Page here?
-        // TODO Needs to be sorted that the Article with the highest Rating is at the TOp Performance?
-        Page<Article> articlesPage = articleRepository.retrieveAllRatedArticles(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
-        List<ArticleDto> articleDtoArrayList = new ArrayList<>();
-        for(Article article:articlesPage.toList()){
-            // TODO Is there a way to make this more dynamic and not so static, pass a List of Criteria Ids?
-            // Get average for each Criterion
-            Double sumCriteria1 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),0L);
-            Double sumCriteria2 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),1L);
-            Double sumCriteria3 = ratingRepository.retrieveAverageRatingOfArticleForCriteria(article.getId(),2L);
-            // TODO Calculate Sum, Ignore if 0
-            Double average = (sumCriteria1 + sumCriteria2 + sumCriteria3) / 3.0;
-            // add to RatingSumDto
-            ArticleDto articleDto = article.toDto();
-            RatingSumDto ratingSumDto = RatingSumDto.builder()
-                    .criteriaRatingSum1(sumCriteria1)
-                    .criteriaRatingSum2(sumCriteria2)
-                    .criteriaRatingSum3(sumCriteria3)
-                    .ratingSum(average)
-                    .build();
-            articleDto.setRatingSumPojo(ratingSumDto);
-            articleDtoArrayList.add(articleDto);
-        }
-
-        // Sorting Here
-
-        GenericPage<ArticleDto> genericPage = new GenericPage<>();
-
-        genericPage.setData(articleDtoArrayList);
-        BeanUtils.copyProperties(articlesPage, genericPage);
-
-        return ResponseEntity.status(HttpStatus.OK).body(genericPage);
-    }
-
-    private RatingSumDto calculateRating(List<Rating> ratingList) {
-        for(Rating rating:ratingList){
-
-        }
-
-        return new RatingSumDto().builder().build();
-    }
-
     @Override
     public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
 
-        LocalDateTime fromDateLocal = DateUtils.stringToLocalDateTime(fromDate);
-        LocalDateTime toDateLocal = DateUtils.stringToLocalDateTime(toDate);
+        List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
+                title, category, publisherNewsPaper,
+                DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
 
-        List<Article> listArticle = articleRepository.retrieveRatedArticlesByCategoryOrPublisherName(category,publisherNewsPaper,title,fromDateLocal,toDateLocal);
-        // Generate Set of Article Ids
-        HashSet<Long> longHashSet = new HashSet<>();
-        for(Article article:listArticle){
-            longHashSet.add(article.getId());
-        }
-        // Get Ratings for all Articles
-        List<List<Rating>> listRating = new ArrayList<>();
-        for(Long id:longHashSet){
-            ratingRepository.findByArticleId(id);
-        }
-        // Calculate
+        PagedListHolder pagedListHolder = new PagedListHolder(customRatedArticleList);
+        pagedListHolder.setPageSize(size);  // number of items per page
+        pagedListHolder.setPage(page);      // set to first page
 
-        // Build Return Object with the necessary Information
-
-        return null;
+        return ResponseEntity.status(HttpStatus.OK).body(
+                GenericPage.builder()
+                        .totalPages(pagedListHolder.getPageCount())
+                        .totalElements(pagedListHolder.getSource().size())
+                        .isFirst(pagedListHolder.isFirstPage())
+                        .isLast(pagedListHolder.isLastPage())
+                        .pageNumber(pagedListHolder.getPage())
+                        .pageNumberOfElements(pagedListHolder.getPageSize())
+                        .data(pagedListHolder.getPageList())
+                        .build()
+        );
     }
-
-    /*
-    public RatingSumDto caculateRating(List<Rating> ratingList){
-        int sum = 0;
-        for(Rating rating: ratingList){
-            int counterRatingMissing = 0;
-            int averageRating = 0;
-
-            if(rating.getRating1() != null || rating.getRating1() != 0){
-                counterRatingMissing++;
-                averageRating = averageRating + rating.getRating1();
-            }
-
-            if(rating.getRating2() != null || rating.getRating2() != 0){
-                counterRatingMissing++;
-                averageRating = averageRating + rating.getRating2();
-            }
-
-            if(rating.getRating1() != null || rating.getRating1() != 0){
-                counterRatingMissing++;
-                averageRating = averageRating + rating.getRating3();
-            }
-
-            if(counterRatingMissing > 2){
-                log.error("This should not be possible");
-            }else{
-                if(counterRatingMissing == 0){
-                    averageRating += averageRating /3;
-                } else if(counterRatingMissing == 1) {
-                    averageRating += averageRating/2;
-                }
-                sum += averageRating;
-            }
-        }
-        int sumRating1 = 0;
-        int sumRating2 = 0;
-        int sumRating3 = 0;
-        int localCounterSumRating1 = 0;
-        int localCounterSumRating2 = 0;
-        int localCounterSumRating3 = 0;
-        for(Rating rating:ratingList){
-            if(rating.getRating1() != null || rating.getRating1() != 0){
-                localCounterSumRating1++;
-                sumRating1 += rating.getRating1();
-            }
-
-            if(rating.getRating2() != null || rating.getRating2() != 0){
-                localCounterSumRating2++;
-                sumRating2 += rating.getRating2();
-            }
-
-            if(rating.getRating2() != null || rating.getRating2() != 0){
-                localCounterSumRating2++;
-                sumRating2 += rating.getRating2();
-            }
-        }
-
-
-        RatingSumDto ratingSumDto = RatingSumDto.builder()
-                .rating1Sum((double) sumRating1/localCounterSumRating1)
-                .rating2Sum((double) sumRating2/localCounterSumRating2)
-                .rating3Sum((double) sumRating3/localCounterSumRating3)
-                .ratingSum((double) sum/ratingList.size())
-                .build();
-
-        return ratingSumDto;
-        }
-        */
 
 }

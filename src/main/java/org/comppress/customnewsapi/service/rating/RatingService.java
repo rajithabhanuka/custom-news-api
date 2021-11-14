@@ -7,8 +7,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface RatingService {
-
     List<RatingDto> getRatings();
-    ResponseEntity<RatingDto> submitRating(SubmitRatingDto submitRatingDto, String token);
-
+    ResponseEntity<RatingDto> submitRating(SubmitRatingDto submitRatingDto, String token) throws Exception;
+    void createRandomRatings(int numberRandomRatings) throws Exception;
 }

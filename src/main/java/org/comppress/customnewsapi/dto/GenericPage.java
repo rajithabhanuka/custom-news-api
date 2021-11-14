@@ -1,11 +1,17 @@
 package org.comppress.customnewsapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class GenericPage<T> {
 
     @JsonProperty("total_pages")
@@ -17,9 +23,9 @@ public class GenericPage<T> {
     @JsonProperty("is_last")
     private boolean isLast;
     @JsonProperty("current_page")
-    private int number;
+    private int pageNumber;
     @JsonProperty("current_page_size")
-    private int numberOfElements;
+    private int pageNumberOfElements;
     @JsonProperty("data")
     private List<T> data;
 

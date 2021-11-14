@@ -18,6 +18,5 @@ public class ArticleDto {
     private LocalDateTime publishedAt;
     private String content;
     private Integer countRatings;
-    private RatingSumDto ratingSumPojo;
 
 }

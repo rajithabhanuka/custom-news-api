@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(value = "/articles")
 public class ArticleController {
@@ -34,7 +32,7 @@ public class ArticleController {
     ){
         return articleService.getArticles(page,size,title,category,publisherNewsPaper,fromDate,toDate);
     }
-    /*
+
     @GetMapping("/rated")
     public ResponseEntity<GenericPage> getRatedArticles(
             @RequestParam(value = "page") int page,
@@ -45,13 +43,6 @@ public class ArticleController {
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ){
-        return articleServiceImpl.getRatedArticles(page,size,title,category,publisherNewsPaper,fromDate,toDate);
-    }
-     */
-    @GetMapping("/rated")
-    public ResponseEntity<GenericPage> getRatedArticles(@RequestParam(value = "page") int page,
-                                                        @RequestParam(value = "size") int size, List<Long> criteriaId){
-
-        return articleService.getRatedArticles(page,size);
+        return articleService.getRatedArticles(page,size,title,category,publisherNewsPaper,fromDate,toDate);
     }
 }

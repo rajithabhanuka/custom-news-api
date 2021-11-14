@@ -26,6 +26,7 @@ public class RatingLoader implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        /*
         List<Article> articleList;
         if(articleRepository.findAll() == null || articleRepository.findAll().isEmpty()){
             log.info("No Articles in the Database, exiting RatingLoader now");
@@ -50,5 +51,7 @@ public class RatingLoader implements ApplicationRunner {
                 ratingRepository.save(rating);
             }
         }
+        */
     }
+
 }

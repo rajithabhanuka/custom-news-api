@@ -12,8 +12,6 @@ public interface ArticleService {
 
     // TODO ? void fetchArticles();
 
-    ResponseEntity<GenericPage> getRatedArticles(int page, int size);
-
     ResponseEntity<GenericPage> getRatedArticles(int page, int size,
                                                  String title, String category,
                                                  String publisherNewsPaper,
