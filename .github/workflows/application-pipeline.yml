@@ -15,7 +15,7 @@ on:
     - Dockerfile
 
 jobs:
-  compile-test-build-push:
+  compile-test-build-push-deploy-to-infrastructure:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -31,13 +31,6 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
       run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
-      
-  deploy-to-infrastructure:
-    runs-on: ubuntu-latest
-    needs:
-      - compile-test-build-push
-    steps:
-    - uses: actions/checkout@v2
     - name: create file with ssh key
       run: |
         mkdir ~/.ssh
