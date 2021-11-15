@@ -49,6 +49,7 @@ jobs:
       run: |
         echo "image: ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}" >> group_vars/all
         echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> group_vars/all
+        echo "mail_password: ${{ secrets.STAGE_MAIL_PASSWORD }}" >> group_vars/all
         cat group_vars/all
     - name: run ansible script
       run: ansible-playbook -i hosts.ini deploy.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }}"
