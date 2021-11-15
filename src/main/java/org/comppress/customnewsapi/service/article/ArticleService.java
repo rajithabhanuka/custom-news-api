@@ -7,13 +7,13 @@ public interface ArticleService {
 
     ResponseEntity<GenericPage> getArticles(int page, int size,
                                             String title, String category,
-                                            String publisherNewsPaper,
+                                            String publisherNewsPaper, String lang,
                                             String fromDate, String toDate);
 
     // TODO ? void fetchArticles();
 
     ResponseEntity<GenericPage> getRatedArticles(int page, int size,
                                                  String title, String category,
-                                                 String publisherNewsPaper,
+                                                 String publisherNewsPaper, String lang,
                                                  String fromDate, String toDate);
 }

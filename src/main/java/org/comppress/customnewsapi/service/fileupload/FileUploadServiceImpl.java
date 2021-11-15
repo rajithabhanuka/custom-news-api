@@ -32,6 +32,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     private final int SOURCE = 0;
     private final int CATEGORY = 1;
     private final int LINK = 2;
+    private final int LANG = 3;
 
     private final RssFeedRepository rssFeedRepository;
     private final PublisherRepository publisherRepository;
@@ -47,20 +48,19 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Transactional
     @Override
     public ResponseEntity<List<RssFeed>> save(MultipartFile file) {
-        
+
         log.info("LINKS IMPORT CSV IS PROCESSING {}", file.getName());
-        
+
         List<CSVRecord> csvRecordList = getRecords(file);
         List<RssFeed> rssFeedList = getRssFeeds(csvRecordList);
         List<RssFeed> finalRssFeedList = new ArrayList<>();
         // TODO Also update Feeds
-        for(RssFeed rssFeed:rssFeedList){
-            if(rssFeedRepository.findByUrl(rssFeed.getUrl()).isEmpty()) finalRssFeedList.add(rssFeed);
+        for (RssFeed rssFeed : rssFeedList) {
+            if (rssFeedRepository.findByUrl(rssFeed.getUrl()).isEmpty()) finalRssFeedList.add(rssFeed);
         }
-
-        try{
+        try {
             rssFeedRepository.saveAll(finalRssFeedList);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             //TODO Logging
         }
@@ -69,31 +69,32 @@ public class FileUploadServiceImpl implements FileUploadService {
     }
 
     private List<CSVRecord> getRecords(MultipartFile file) {
-        try{
+        try {
             CSVParser csvParser = new CSVParser(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8), CSVFormat.DEFAULT.withDelimiter(';'));
             return csvParser.getRecords();
         } catch (IOException e) {
-           throw new FileImportException("Failed to import csv file", file.getName());
+            throw new FileImportException("Failed to import csv file", file.getName());
         }
     }
 
     private List<RssFeed> getRssFeeds(List<CSVRecord> csvRecordList) {
         List<RssFeed> rssFeedList = new ArrayList<>();
 
-        for(CSVRecord record:csvRecordList){
+        for (CSVRecord record : csvRecordList) {
             Publisher publisher = publisherRepository.findByName(record.get(SOURCE));
-            if(publisher == null){
+            if (publisher == null) {
                 publisher = new Publisher(record.get(SOURCE));
                 publisherRepository.save(publisher);
             }
             Category category = categoryRepository.findByName(record.get(CATEGORY));
-            if(category == null){
+            if (category == null) {
                 category = new Category(record.get(CATEGORY));
                 categoryRepository.save(category);
             }
             rssFeedList.add(RssFeed.builder()
                     .publisherId(publisher.getId())
                     .categoryId(category.getId())
+                    .lang(record.get(LANG))
                     .url(record.get(LINK)).build());
         }
 

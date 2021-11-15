@@ -218,11 +218,11 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return response.body();
     }
 
-    public ResponseEntity<GenericPage> getArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage> getArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
 
         Page<Article> articlesPage = articleRepository
                 .retrieveByCategoryOrPublisherName(category,
-                        publisherNewsPaper, title,
+                        publisherNewsPaper, title, lang,
                         DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate),
                         PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
@@ -235,10 +235,10 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
 
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
-                title, category, publisherNewsPaper,
+                title, category, publisherNewsPaper, lang,
                 DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
 
         PagedListHolder pagedListHolder = new PagedListHolder(customRatedArticleList);

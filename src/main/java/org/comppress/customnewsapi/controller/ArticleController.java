@@ -27,10 +27,11 @@ public class ArticleController {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "publisherNewsPaper", required = false) String publisherNewsPaper,
+            @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
-    ){
-        return articleService.getArticles(page,size,title,category,publisherNewsPaper,fromDate,toDate);
+    ) {
+        return articleService.getArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
     }
 
     @GetMapping("/rated")
@@ -40,9 +41,10 @@ public class ArticleController {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "publisherNewsPaper", required = false) String publisherNewsPaper,
+            @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
-    ){
-        return articleService.getRatedArticles(page,size,title,category,publisherNewsPaper,fromDate,toDate);
+    ) {
+        return articleService.getRatedArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
     }
 }
