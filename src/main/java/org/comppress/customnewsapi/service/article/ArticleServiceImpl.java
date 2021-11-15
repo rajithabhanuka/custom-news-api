@@ -226,6 +226,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
                         DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate),
                         PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
+
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
         genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);

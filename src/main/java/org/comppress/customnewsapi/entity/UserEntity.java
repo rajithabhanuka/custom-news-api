@@ -21,5 +21,7 @@ public class UserEntity extends AbstractEntity implements Transformer {
     private String otp;
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isOtpUsed;
+    private String listCategoryIds;
+    private String listPublisherIds;
 
 }

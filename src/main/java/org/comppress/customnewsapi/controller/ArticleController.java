@@ -45,6 +45,9 @@ public class ArticleController {
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ) {
+        // Check here for User Preferences and then pass
         return articleService.getRatedArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
     }
+    ///custom-news-api/home
+
 }

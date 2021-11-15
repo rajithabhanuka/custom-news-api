@@ -1,7 +1,13 @@
 package org.comppress.customnewsapi.service.profile;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Header;
+import io.jsonwebtoken.Jwt;
+import io.jsonwebtoken.Jwts;
 import org.comppress.customnewsapi.dto.ForgetPasswordDto;
+import org.comppress.customnewsapi.dto.PreferenceDto;
 import org.comppress.customnewsapi.dto.UpdatePasswordDto;
+import org.comppress.customnewsapi.dto.UserDto;
 import org.comppress.customnewsapi.entity.UserEntity;
 import org.comppress.customnewsapi.exceptions.EmailAlreadyExistsException;
 import org.comppress.customnewsapi.exceptions.EmailSenderException;
@@ -9,9 +15,12 @@ import org.comppress.customnewsapi.exceptions.PasswordNotMatchException;
 import org.comppress.customnewsapi.exceptions.RecordNotFoundException;
 import org.comppress.customnewsapi.repository.UserRepository;
 import org.comppress.customnewsapi.service.email.EmailService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -83,6 +92,19 @@ public class ProfileServiceImpl implements ProfileService {
         emailService.sendAutomatedEmailWithTemplate(properties);
 
         return ResponseEntity.ok(updatePasswordDto);
+    }
+
+    @Override
+    public ResponseEntity<UserDto> updateCategoryAndPublisherPreference(PreferenceDto preferenceDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        if(userEntity == null){ return ResponseEntity.status(401).body(null);}
+        userEntity.setListCategoryIds(preferenceDto.getListOfCategoryIds());
+        userEntity.setListPublisherIds(preferenceDto.getListOfPublisherIds());
+        userRepository.save(userEntity);
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity, userDto);
+        return ResponseEntity.ok().body(userDto);
     }
 
     private String encryptPassword(String password) {
