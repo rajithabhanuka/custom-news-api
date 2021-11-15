@@ -1,14 +1,12 @@
 package org.comppress.customnewsapi.mapper;
 
-import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndEntryImpl;
+import org.comppress.customnewsapi.dto.PublisherDto;
+import org.comppress.customnewsapi.dto.CategoryDto;
 import org.comppress.customnewsapi.dto.CriteriaDto;
 import org.comppress.customnewsapi.dto.RatingDto;
 import org.comppress.customnewsapi.dto.SubmitRatingDto;
 import org.comppress.customnewsapi.dto.xml.ItemDto;
-import org.comppress.customnewsapi.entity.Article;
-import org.comppress.customnewsapi.entity.Criteria;
-import org.comppress.customnewsapi.entity.Rating;
+import org.comppress.customnewsapi.entity.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.MapperConfig;
 import org.mapstruct.Mapping;
@@ -30,5 +28,7 @@ public interface MapstructMapper {
     RatingDto ratingToRatingDto(Rating rating);
 
     CriteriaDto criteriaToCriteriaDto(Criteria criteria);
+    CategoryDto categoryToCategoryDto(Category category);
+    PublisherDto publisherToPublisherDto(Publisher publisher);
 
 }
