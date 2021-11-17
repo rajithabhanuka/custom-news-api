@@ -16,6 +16,8 @@ mysql:
   environment:
     MYSQL_ROOT_PASSWORD: {{ password }}
     MYSQL_DATABASE: comppress
+  ports:
+    - "0.0.0.0:3306:3306"
   volumes:
     - /etc/timezone:/etc/timezone:ro
     - /etc/localtime:/etc/localtime:ro
