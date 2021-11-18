@@ -49,5 +49,4 @@ public class ArticleController {
         return articleService.getRatedArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
     }
     ///custom-news-api/home
-
 }

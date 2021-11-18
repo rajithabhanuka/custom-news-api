@@ -2,6 +2,7 @@ package org.comppress.customnewsapi.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
+import org.comppress.customnewsapi.service.article.ArticleService;
 import org.comppress.customnewsapi.service.article.ArticleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +18,10 @@ public class NewsFeedScheduler {
     @Value("${scheduler.enabled}")
     private boolean enabled;
 
-    private final ArticleServiceImpl articleServiceImpl;
+    private final ArticleService articleService;
 
-    @Autowired
-    public NewsFeedScheduler(ArticleServiceImpl articleServiceImpl) {
-        this.articleServiceImpl = articleServiceImpl;
+    public NewsFeedScheduler(ArticleService articleService) {
+        this.articleService = articleService;
     }
 
     @Scheduled(fixedDelayString = "${scheduler.triggeringIntervalMilliSeconds}",
@@ -30,7 +30,7 @@ public class NewsFeedScheduler {
     public void saveNewsFeed(){
         if(enabled){
             log.info("Scheduler feeding data!");
-            articleServiceImpl.fetchArticlesWithRome();
+            articleService.fetchArticlesWithRome();
         }
     }
 

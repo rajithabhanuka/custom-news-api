@@ -40,6 +40,7 @@ public class EntityLoader implements ApplicationRunner {
         boolean tmp = true;
         if(tmp) return;
         // https://stackoverflow.com/questions/44399422/read-file-from-resources-folder-in-spring-boot
+        /*
         File file = null;
         try {
             file = new ClassPathResource("json/news-feeds.json").getFile();
@@ -83,6 +84,6 @@ public class EntityLoader implements ApplicationRunner {
         }
         log.info("Created " + counterPublisher + " Publisher, " + counterCategory + " Categories and " + counterRssFeed + " Rss Feed");
         log.info("Exiting Entity Loader now");
-
+           */
     }
 }

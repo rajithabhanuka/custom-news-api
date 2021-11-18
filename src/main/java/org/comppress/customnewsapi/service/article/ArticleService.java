@@ -10,7 +10,8 @@ public interface ArticleService {
                                             String publisherNewsPaper, String lang,
                                             String fromDate, String toDate);
 
-    // TODO ? void fetchArticles();
+    void fetchArticlesWithRome();
+
 
     ResponseEntity<GenericPage> getRatedArticles(int page, int size,
                                                  String title, String category,

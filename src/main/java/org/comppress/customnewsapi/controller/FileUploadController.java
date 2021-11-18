@@ -1,5 +1,6 @@
 package org.comppress.customnewsapi.controller;
 
+import org.comppress.customnewsapi.dto.CriteriaDto;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.service.fileupload.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,12 @@ public class FileUploadController {
     }
 
     @PostMapping(value ="/links", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<RssFeed>> save(@RequestParam("file") MultipartFile file){
-        return fileUploadService.save(file);
+    public ResponseEntity<List<RssFeed>> saveRssFeeds(@RequestParam("file") MultipartFile file){
+        return fileUploadService.saveRssFeeds(file);
     }
 
-
+    @PostMapping(value ="/criteria", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<CriteriaDto>> saveCriteria(@RequestParam("file") MultipartFile file){
+        return fileUploadService.saveCriteria(file);
+    }
 }

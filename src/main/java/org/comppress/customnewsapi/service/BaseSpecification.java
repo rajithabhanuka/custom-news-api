@@ -6,6 +6,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface BaseSpecification {
 
@@ -29,6 +31,16 @@ public interface BaseSpecification {
                 value == 0 ?
                         builder.conjunction() :
                         builder.equal(root.get(column), value);
+    }
+
+    default<T> Specification<T> querySpecificationIn(List<Integer> types, String column) {
+        return (root, query, cb) -> {
+            if (types != null && !types.isEmpty()) {
+                return root.get(column).in(types);
+            } else {
+                return cb.and();
+            }
+        };
     }
 
     /** 3
