@@ -10,11 +10,12 @@ import org.comppress.customnewsapi.utils.Transformer;
 public class UserDto implements Transformer {
     private String name;
     private String email;
-    private String country;
     private String username;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    @JsonProperty(value = "category_ids")
     private String listCategoryIds;
+    @JsonProperty(value = "publisher_ids")
     private String listPublisherIds;
 
 }
