@@ -15,7 +15,6 @@ public class UserEntity extends AbstractEntity implements Transformer {
     private String name;
     @Column(unique = true)
     private String email;
-    private String country;
     private String username;
     private String password;
     private String otp;

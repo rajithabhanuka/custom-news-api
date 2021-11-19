@@ -11,10 +11,8 @@ import com.rometools.rome.io.XmlReader;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
-import org.comppress.customnewsapi.dto.RatingSumDto;
 import org.comppress.customnewsapi.dto.xml.ItemDto;
 import org.comppress.customnewsapi.entity.Article;
-import org.comppress.customnewsapi.entity.Rating;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
@@ -24,9 +22,8 @@ import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.DateUtils;
+import org.comppress.customnewsapi.utils.PageHolderUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.support.PagedListHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -241,22 +238,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
                 title, category, publisherNewsPaper, lang,
                 DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
-
-        PagedListHolder pagedListHolder = new PagedListHolder(customRatedArticleList);
-        pagedListHolder.setPageSize(size);  // number of items per page
-        pagedListHolder.setPage(page);      // set to first page
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                GenericPage.builder()
-                        .totalPages(pagedListHolder.getPageCount())
-                        .totalElements(pagedListHolder.getSource().size())
-                        .isFirst(pagedListHolder.isFirstPage())
-                        .isLast(pagedListHolder.isLastPage())
-                        .pageNumber(pagedListHolder.getPage())
-                        .pageNumberOfElements(pagedListHolder.getPageSize())
-                        .data(pagedListHolder.getPageList())
-                        .build()
-        );
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleList);
     }
 
     @Override

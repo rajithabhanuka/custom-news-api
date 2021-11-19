@@ -12,4 +12,5 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category,Long>, JpaSpecificationExecutor<Category> {
     Category findByName(String name);
     Page<Category> findByLang(String lang, Pageable pageable);
+    List<Category> findByLang(String lang);
 }
