@@ -1,23 +1,22 @@
 package org.comppress.customnewsapi.service.profile;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwt;
-import io.jsonwebtoken.Jwts;
 import org.comppress.customnewsapi.dto.ForgetPasswordDto;
 import org.comppress.customnewsapi.dto.PreferenceDto;
 import org.comppress.customnewsapi.dto.UpdatePasswordDto;
 import org.comppress.customnewsapi.dto.UserDto;
+import org.comppress.customnewsapi.dto.response.ForgetPasswordResponseDto;
+import org.comppress.customnewsapi.dto.response.ResponseDto;
 import org.comppress.customnewsapi.entity.UserEntity;
 import org.comppress.customnewsapi.exceptions.EmailAlreadyExistsException;
 import org.comppress.customnewsapi.exceptions.EmailSenderException;
 import org.comppress.customnewsapi.exceptions.PasswordNotMatchException;
-import org.comppress.customnewsapi.exceptions.RecordNotFoundException;
+import org.comppress.customnewsapi.exceptions.UserNotFoundException;
 import org.comppress.customnewsapi.repository.UserRepository;
 import org.comppress.customnewsapi.service.email.EmailService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,9 +45,9 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public void sendOtp(ForgetPasswordDto forgetPasswordDto) throws EmailSenderException, EmailAlreadyExistsException {
+    public ResponseEntity<ResponseDto> sendOtp(ForgetPasswordDto forgetPasswordDto) throws EmailSenderException, EmailAlreadyExistsException {
         UserEntity user = userRepository.findByEmail(forgetPasswordDto.getEmail()).
-                orElseThrow(() -> new RecordNotFoundException("User not found",forgetPasswordDto.getEmail()));
+                orElseThrow(() -> new UserNotFoundException("User not found",forgetPasswordDto.getEmail()));
 
         String otp = String.format("%06d", new Random().nextInt(999999));
 
@@ -67,12 +66,16 @@ public class ProfileServiceImpl implements ProfileService {
 
         emailService.sendAutomatedEmailWithTemplate(properties);
 
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ForgetPasswordResponseDto.builder()
+                        .message("Please check your email")
+                        .build());
     }
 
     @Override
     public ResponseEntity<UpdatePasswordDto> updatePassword(UpdatePasswordDto updatePasswordDto) throws EmailSenderException, EmailAlreadyExistsException {
         UserEntity user = userRepository.findByOtpAndEmailAndIsOtpUsedFalse(updatePasswordDto.getOtp(),updatePasswordDto.getEmail()).
-                orElseThrow(() -> new RecordNotFoundException("User not found for given otp and email",updatePasswordDto.getEmail()));
+                orElseThrow(() -> new UserNotFoundException("User not found for given otp and email",updatePasswordDto.getEmail()));
 
         if (!updatePasswordDto.getNewPassword().equals(updatePasswordDto.getConfirmPassword())) {
             throw new PasswordNotMatchException("New Passwords are Not Matching", "Please check");

@@ -91,12 +91,12 @@ public class FileUploadServiceImpl implements FileUploadService {
         for (CSVRecord record : csvRecordList) {
             Publisher publisher = publisherRepository.findByName(record.get(RSS_FEED_SOURCE));
             if (publisher == null) {
-                publisher = new Publisher(record.get(RSS_FEED_SOURCE),record.get(RSS_FEED_LANG));
+                publisher = new Publisher(record.get(RSS_FEED_SOURCE),record.get(RSS_FEED_LANG),"");
                 publisherRepository.save(publisher);
             }
             Category category = categoryRepository.findByName(record.get(RSS_FEED_CATEGORY));
             if (category == null) {
-                category = new Category(record.get(RSS_FEED_CATEGORY), record.get(RSS_FEED_LANG));
+                category = new Category(record.get(RSS_FEED_CATEGORY), record.get(RSS_FEED_LANG),"");
                 categoryRepository.save(category);
             }
             rssFeedList.add(RssFeed.builder()

@@ -1,5 +1,6 @@
 package org.comppress.customnewsapi.controller;
 
+import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.dto.UserPreferenceDto;
 import org.comppress.customnewsapi.entity.Article;
@@ -43,7 +44,7 @@ public class HomeController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<GenericPage<ArticleRepository.CustomRatedArticle>> getArticleForCategory(
+    public ResponseEntity<GenericPage<CustomRatedArticleDto>> getArticleForCategory(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
             @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds,

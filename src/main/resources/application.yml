@@ -12,7 +12,7 @@ spring:
   mail:
     host: smtp.mailbox.org
     username: no-reply@comppress.org
-    password: juFTDL942i8Y
+    password: password
     port: 587
     properties:
       mail:
@@ -28,6 +28,6 @@ server:
 scheduler:
   triggeringIntervalMilliSeconds: 20000
   initialDelayIntervalMilliSeconds: 5000
-  enabled: yes
+  enabled: no
 jwt:
   secret: secret

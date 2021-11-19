@@ -23,6 +23,7 @@ public class Rating extends AbstractEntity{
     private Long userId;
     private Long articleId;
     private Integer rating;
+    private String guid;
 
     public RatingDto toDto(){
         RatingDto ratingDto = new RatingDto();

@@ -1,5 +1,6 @@
 package org.comppress.customnewsapi.repository;
 
+import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.utils.StaticSQLQueries;
 import org.springframework.data.domain.Page;
@@ -71,24 +72,36 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
-
-
     // TODO Look for clean solution here
     interface CustomRatedArticle {
         Long getArticle_id();
+
         String getAuthor();
+
         String getTitle();
+
         String getDescription();
+
         String getUrl();
+
         String getUrl_to_image();
+
         String getGuid();
+
         String getPublished_at();
+
         String getContent();
+
         Integer getCount_ratings();
+
         Double getAverage_rating_criteria_1();
+
         Double getAverage_rating_criteria_2();
+
         Double getAverage_rating_criteria_3();
+
         Double getTotal_average_rating();
+
     }
 
 
@@ -108,7 +121,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "p.id in :publisherIds AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC"
-            ,countQuery = "select count(*) " +
+            , countQuery = "select count(*) " +
             "from (SELECT distinct r.article_id,\n" +
             "                      (select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=1) as average_rating_criteria_1,\n" +
             "                      (select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=2) as average_rating_criteria_2,\n" +
@@ -119,7 +132,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "p.id in :publisherIds AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id"
-            ,nativeQuery = true)
+            , nativeQuery = true)
     Page<CustomRatedArticle> retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguage(
             @Param("categoryIds") List<Long> categoryIds,
             @Param("publisherIds") List<Long> publisherIds,
@@ -145,7 +158,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "p.id in :publisherIds AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC LIMIT 1"
-            ,nativeQuery = true)
+            , nativeQuery = true)
     CustomRatedArticle retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguageAndLimit(
             @Param("categoryId") Long categoryId,
             @Param("publisherIds") List<Long> publisherIds,
@@ -154,9 +167,28 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("toDate") LocalDateTime toDate
     );
 
-
-    @Query(value = "SELECT * FROM article WHERE (:articleId is null or id = :articleId)",nativeQuery = true)
+    @Query(value = "SELECT * FROM article WHERE (:articleId is null or id = :articleId)", nativeQuery = true)
     List<Article> customTestQuery(@Param("articleId") Long articleId);
 
-
+    @Query(value = "SELECT * FROM article a JOIN rss_feed rf on rf.id = a.rss_feed_id " +
+            "WHERE a.count_ratings = 0 AND " +
+            "rf.category_id = :categoryId AND " +
+            "rf.publisher_id in (:publisherIds) AND " +
+            "rf.lang = :lang AND " +
+            "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
+            "ORDER BY a.published_at DESC",
+            countQuery = "SELECT count(*) FROM article a JOIN rss_feed rf on rf.id = a.rss_feed_id " +
+                    "WHERE a.count_ratings = 0 AND " +
+                    "rf.category_id = :categoryId AND " +
+                    "rf.publisher_id in (:publisherIds) AND " +
+                    "rf.lang = :lang AND " +
+                    "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now())"
+            , nativeQuery = true)
+    Page<Article> retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(
+            @Param("categoryId") Long categoryId,
+            @Param("publisherIds") List<Long> publisherIds,
+            @Param("lang") String lang,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
 }

@@ -13,4 +13,5 @@ import javax.persistence.Entity;
 public class Category extends AbstractEntity{
     String name;
     String lang;
+    String urlToImage;
 }

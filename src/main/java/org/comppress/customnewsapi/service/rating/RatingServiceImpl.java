@@ -1,27 +1,24 @@
 package org.comppress.customnewsapi.service.rating;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwt;
-import io.jsonwebtoken.Jwts;
 import org.comppress.customnewsapi.dto.CriteriaRatingDto;
 import org.comppress.customnewsapi.dto.RatingDto;
 import org.comppress.customnewsapi.dto.SubmitRatingDto;
+import org.comppress.customnewsapi.dto.response.CreateRatingResponseDto;
+import org.comppress.customnewsapi.dto.response.ResponseDto;
+import org.comppress.customnewsapi.dto.response.UpdateRatingResponseDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.Criteria;
 import org.comppress.customnewsapi.entity.Rating;
 import org.comppress.customnewsapi.entity.UserEntity;
+import org.comppress.customnewsapi.exceptions.CriteriaDoesNotExistException;
 import org.comppress.customnewsapi.repository.*;
-import org.comppress.customnewsapi.service.criteria.CriteriaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class RatingServiceImpl implements RatingService {
@@ -47,66 +44,91 @@ public class RatingServiceImpl implements RatingService {
     }
 
     @Override
-    public ResponseEntity<RatingDto> submitRating(SubmitRatingDto submitRatingDto, String token) throws Exception {
-        // Get User from JWT?
-        UserEntity user = null;
-        if(token != null){
-            token = token.replace("Bearer", "");
-            int i = token.lastIndexOf('.');
-            String withoutSignature = token.substring(0, i+1);
-            Jwt<Header, Claims> untrusted = Jwts.parser().parseClaimsJwt(withoutSignature);
-            user = userRepository.findByUsername(untrusted.getBody().getSubject());
-            if(user == null) throw new RuntimeException("User is Null");
-        }else{
-            throw new RuntimeException("JWT Token is Null");
+    public ResponseEntity<ResponseDto> submitRating(SubmitRatingDto submitRatingDto, String guid) throws Exception {
+        UserEntity userEntity = null;
+        if (guid == null) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            userEntity = userRepository.findByUsername(authentication.getName());
         }
-
-        for(CriteriaRatingDto criteriaRating:submitRatingDto.getRatings()){
-            // TODO Why existBy does not work for JPA?
-            if(!criteriaRepository.existsById(criteriaRating.getCriteriaId()) ||
-            !articleRepository.existsById(submitRatingDto.getArticleId())){
-                // TODO Add custom Exception and Logging
-                throw new RuntimeException("Wrong Article or Criteria Id");
+        List<Rating> ratings = new ArrayList<>();
+        boolean isUpdateRating = false;
+        if (userEntity == null && guid != null) {
+            // NOT LOGGED IN USER WITH GUID
+            for (CriteriaRatingDto criteriaRating : submitRatingDto.getRatings()) {
+                validateArticleAndCriteria(submitRatingDto, criteriaRating);
+                Rating rating = ratingRepository.findByGuidAndArticleIdAndCriteriaId(guid,
+                        submitRatingDto.getArticleId(),
+                        criteriaRating.getCriteriaId());
+                isUpdateRating = prepareRating(isUpdateRating,submitRatingDto, guid, ratings, criteriaRating, rating, 0L);
             }
-            Rating rating = ratingRepository.findByUserIdAndArticleIdAndCriteriaId(user.getId(),
-                    submitRatingDto.getArticleId(),
-                    criteriaRating.getCriteriaId());
-            if(rating != null){
-                rating.setRating(criteriaRating.getRating());
-                ratingRepository.save(rating);
-            } else {
-                Rating newRating = Rating.builder()
-                        .rating(criteriaRating.getRating())
-                        .articleId(submitRatingDto.getArticleId())
-                        .criteriaId(criteriaRating.getCriteriaId())
-                        .userId(user.getId())
-                        .build();
-                ratingRepository.save(newRating);
+        } else {
+            // LOGGED IN USER WITH JWT
+            for (CriteriaRatingDto criteriaRating : submitRatingDto.getRatings()) {
+                validateArticleAndCriteria(submitRatingDto, criteriaRating);
+                Rating rating = ratingRepository.findByUserIdAndArticleIdAndCriteriaId(userEntity.getId(),
+                        submitRatingDto.getArticleId(),
+                        criteriaRating.getCriteriaId());
+                isUpdateRating = prepareRating(isUpdateRating,submitRatingDto, "-", ratings, criteriaRating, rating, userEntity.getId());
             }
         }
-        Optional<Article> article = articleRepository.findById(submitRatingDto.getArticleId());
-        if(article.isPresent()){
-            Integer countRatings = article.get().getCountRatings();
-            if(countRatings == null) countRatings = 0;
-            countRatings = countRatings + 1;
-            article.get().setCountRatings(countRatings);
-            articleRepository.save(article.get());
-        }else{
-            throw new Exception("Article does not Exist! Cant Increment Rating for Article");
+        ratingRepository.saveAll(ratings);
+        if(!isUpdateRating){
+            Optional<Article> article = articleRepository.findById(submitRatingDto.getArticleId());
+            if (article.isPresent()) {
+                Integer countRatings = article.get().getCountRatings();
+                if (countRatings == null) countRatings = 0;
+                countRatings = countRatings + 1;
+                article.get().setCountRatings(countRatings);
+                articleRepository.save(article.get());
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(UpdateRatingResponseDto.builder()
+                    .message("Created rating for article")
+                    .submitRatingDto(submitRatingDto)
+                    .build());
+        } else {
+            return ResponseEntity.status(HttpStatus.CREATED).body(CreateRatingResponseDto.builder()
+                    .message("Updated rating for article")
+                    .submitRatingDto(submitRatingDto)
+                    .build());
         }
+    }
 
-        // TODO return State of the DB, or saved state
-        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+    private boolean prepareRating(boolean isUpdateRating, SubmitRatingDto submitRatingDto, String guid, List<Rating> ratings, CriteriaRatingDto criteriaRating, Rating rating, long l) {
+        if (rating != null) {
+            rating.setRating(criteriaRating.getRating());
+            ratings.add(rating);
+            isUpdateRating = true;
+        } else {
+            Rating newRating = Rating.builder()
+                    .rating(criteriaRating.getRating())
+                    .articleId(submitRatingDto.getArticleId())
+                    .criteriaId(criteriaRating.getCriteriaId())
+                    .userId(l) // Anonymous User
+                    .guid(guid)
+                    .build();
+            ratings.add(newRating);
+        }
+        return isUpdateRating;
+    }
+
+    private void validateArticleAndCriteria(SubmitRatingDto submitRatingDto, CriteriaRatingDto criteriaRating) {
+        if (!criteriaRepository.existsById(criteriaRating.getCriteriaId())) {
+            throw new CriteriaDoesNotExistException("Criteria id not found", String.valueOf(criteriaRating.getCriteriaId()));
+        }
+        if (!articleRepository.existsById(submitRatingDto.getArticleId())) {
+            throw new CriteriaDoesNotExistException("Article id not found", String.valueOf(submitRatingDto.getArticleId()));
+        }
     }
 
     @Override
     public void createRandomRatings(int numberRandomRatings) throws Exception {
-        String token = "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJsdWNhcyIsImV4cCI6MTYzNzUyODU4NCwiaWF0IjoxNjM2OTIzNzg0fQ.MdIl2aCajN3fqYBExvHvONgbhP31pXRK2tmO1VMSKQkpTODnvJ6ua9zA_8RTDQwHZwCj2FhGjAZRO30GoJTCPg";
         Random random = new Random();
-        for(Article article:articleRepository.retrieveRandomArticles(numberRandomRatings)){
+        String guid = UUID.randomUUID().toString();
+        List<Criteria> criteriaList = criteriaRepository.findAll();
+        for (Article article : articleRepository.retrieveRandomArticles(numberRandomRatings)) {
             SubmitRatingDto submitRatingDto = new SubmitRatingDto();
             List<CriteriaRatingDto> criteriaRatingDtoList = new ArrayList<>();
-            for(Criteria criteria:criteriaRepository.findAll()){
+            for (Criteria criteria : criteriaList) {
                 CriteriaRatingDto criteriaRatingDto = new CriteriaRatingDto();
                 criteriaRatingDto.setRating(random.nextInt(5) + 1);
                 criteriaRatingDto.setCriteriaId(criteria.getId());
@@ -114,7 +136,7 @@ public class RatingServiceImpl implements RatingService {
             }
             submitRatingDto.setRatings(criteriaRatingDtoList);
             submitRatingDto.setArticleId(article.getId());
-            submitRating(submitRatingDto, token);
+            submitRating(submitRatingDto, guid);
         }
     }
 

@@ -1,11 +1,7 @@
 package org.comppress.customnewsapi.service.home;
 
 import lombok.extern.slf4j.Slf4j;
-import org.comppress.customnewsapi.dto.ArticleDto;
-import org.comppress.customnewsapi.dto.CustomCategoryDto;
-import org.comppress.customnewsapi.dto.GenericPage;
-import org.comppress.customnewsapi.dto.UserPreferenceDto;
-import org.comppress.customnewsapi.entity.Article;
+import org.comppress.customnewsapi.dto.*;
 import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.UserEntity;
 import org.comppress.customnewsapi.repository.*;
@@ -15,7 +11,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -75,10 +70,10 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage<ArticleRepository.CustomRatedArticle>> getArticleForCategory(int page, int size, List<Long> categoryIds, List<Long> publisherIds, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<CustomRatedArticleDto>> getArticleForCategory(int page, int size, List<Long> categoryIds, List<Long> publisherIds, String lang, String fromDate, String toDate) {
         // TODO Interceptor Checking for Either JWT or GUID
         if (categoryIds == null || categoryIds.isEmpty()) {
-            categoryIds = categoryRepository.findByLang(lang).stream().map(category -> category.getId()).collect(Collectors.toList());
+            categoryIds = categoryRepository.findByLang(lang, PageRequest.of(page, size)).stream().map(category -> category.getId()).collect(Collectors.toList());
         }
         if (publisherIds == null || publisherIds.isEmpty()) {
             publisherIds = publisherRepository.findByLang(lang).stream().map(publisher -> publisher.getId()).collect(Collectors.toList());
@@ -87,8 +82,14 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         Page<ArticleRepository.CustomRatedArticle> articlesPage = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguage(
                 categoryIds, publisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size)
         );
-        GenericPage<ArticleRepository.CustomRatedArticle> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().collect(Collectors.toList()));
+        GenericPage<CustomRatedArticleDto> genericPage = new GenericPage<>();
+        List<CustomRatedArticleDto> customRatedArticleDtos = new ArrayList<>();
+        for(ArticleRepository.CustomRatedArticle customRatedArticle: articlesPage.toList()){
+            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
+            BeanUtils.copyProperties(customRatedArticle,customRatedArticleDto);
+            customRatedArticleDtos.add(customRatedArticleDto);
+        }
+        genericPage.setData(customRatedArticleDtos);
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.ok().body(genericPage);

@@ -19,6 +19,8 @@ public interface RatingRepository extends JpaRepository<Rating,Long> {
 
     Rating findByUserIdAndArticleIdAndCriteriaId(Long userId, Long articleId, Long criteriaId);
 
+    Rating findByGuidAndArticleIdAndCriteriaId(String guid, Long articleId, Long criteriaId);
+
     List<Rating> findByArticleId(Long articleId);
 
     @Query(value = "SELECT AVG(rating) FROM rating WHERE article_id = :articleId AND criteria_id = :criteriaId ", nativeQuery = true)

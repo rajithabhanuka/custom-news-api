@@ -28,8 +28,8 @@ public class Article extends AbstractEntity{
     @Column(length = 65536 * 64)
     private String content;
     private Long rssFeedId;
-    @Column(columnDefinition = "integer default 0")
-    private Integer countRatings;
+    @Column(columnDefinition = "integer default 0",nullable = false)
+    private Integer countRatings = 0;
 
     public ArticleDto toDto(){
         ArticleDto articleDto = new ArticleDto();

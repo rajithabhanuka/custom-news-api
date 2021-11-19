@@ -18,6 +18,7 @@ import org.comppress.customnewsapi.entity.Rating;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
+import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.comppress.customnewsapi.repository.RatingRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
@@ -43,9 +44,7 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,13 +56,14 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     private final MapstructMapper mapstructMapper;
     private final ArticleRepository articleRepository;
     private final RatingRepository ratingRepository;
+    private final PublisherRepository publisherRepository;
 
-    @Autowired
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, MapstructMapper mapstructMapper, ArticleRepository articleRepository, RatingRepository ratingRepository) {
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, MapstructMapper mapstructMapper, ArticleRepository articleRepository, RatingRepository ratingRepository, PublisherRepository publisherRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.mapstructMapper = mapstructMapper;
         this.articleRepository = articleRepository;
         this.ratingRepository = ratingRepository;
+        this.publisherRepository = publisherRepository;
     }
 
     public void fetchArticlesWithRome() {
@@ -259,4 +259,18 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         );
     }
 
+    @Override
+    public ResponseEntity<GenericPage> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
+        if(listPublisherIds == null){
+            listPublisherIds = publisherRepository.findAll().stream().map(p -> p.getId()).collect(Collectors.toList());
+        }
+        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds,lang,DateUtils.stringToLocalDateTime(fromDate),DateUtils.stringToLocalDateTime(fromDate), PageRequest.of(page, size));
+
+        GenericPage<ArticleDto> genericPage = new GenericPage<>();
+        genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
+        BeanUtils.copyProperties(articlesPage, genericPage);
+
+        return ResponseEntity.status(HttpStatus.OK).body(genericPage);
+
+    }
 }

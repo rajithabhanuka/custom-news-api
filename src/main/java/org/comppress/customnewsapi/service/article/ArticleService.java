@@ -1,7 +1,10 @@
 package org.comppress.customnewsapi.service.article;
 
+import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 public interface ArticleService {
 
@@ -10,6 +13,7 @@ public interface ArticleService {
                                             String publisherNewsPaper, String lang,
                                             String fromDate, String toDate);
 
+    // TODO improve Method
     void fetchArticlesWithRome();
 
 
@@ -17,4 +21,8 @@ public interface ArticleService {
                                                  String title, String category,
                                                  String publisherNewsPaper, String lang,
                                                  String fromDate, String toDate);
+
+    ResponseEntity<GenericPage> getArticlesNotRated(int page, int size, Long category,
+                                                                List<Long> listPublisherIds, String lang,
+                                                                String fromDate, String toDate);
 }

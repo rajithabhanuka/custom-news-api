@@ -16,5 +16,5 @@ public class Publisher extends AbstractEntity {
     @Column(unique = true)
     String name;
     String lang;
-
+    String urlToImage;
 }

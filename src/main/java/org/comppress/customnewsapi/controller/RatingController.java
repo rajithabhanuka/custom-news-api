@@ -2,6 +2,7 @@ package org.comppress.customnewsapi.controller;
 
 import org.comppress.customnewsapi.dto.RatingDto;
 import org.comppress.customnewsapi.dto.SubmitRatingDto;
+import org.comppress.customnewsapi.dto.response.ResponseDto;
 import org.comppress.customnewsapi.entity.Criteria;
 import org.comppress.customnewsapi.service.rating.RatingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,8 @@ public class RatingController {
     }
 
     @PostMapping("/submit")
-    public ResponseEntity<RatingDto> submitRating(@RequestBody SubmitRatingDto submitRatingDto, @RequestHeader(name="Authorization") String token) throws Exception {
-        return ratingService.submitRating(submitRatingDto, token);
+    public ResponseEntity<ResponseDto> submitRating(@RequestBody SubmitRatingDto submitRatingDto, @RequestParam(required = false) String guid) throws Exception {
+        return ratingService.submitRating(submitRatingDto,guid);
     }
 
     @GetMapping("/generate")
@@ -32,6 +33,4 @@ public class RatingController {
         ratingService.createRandomRatings(100);
         return ResponseEntity.ok().body("Successfully generated " + numberRandomRatings + " random ratings");
     }
-
-
 }
