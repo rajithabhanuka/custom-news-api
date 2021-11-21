@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.comppress.customnewsapi.dto.CategoryDto;
 import org.comppress.customnewsapi.dto.CriteriaDto;
+import org.comppress.customnewsapi.dto.PublisherDto;
 import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.Criteria;
 import org.comppress.customnewsapi.entity.Publisher;
@@ -39,6 +41,12 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     private final int CRITERIA_ID = 0;
     private final int CRITERIA_NAME = 1;
+
+    private final int CATEGORY_NAME = 0;
+    private final int CATEGORY_SVG_URL = 1;
+
+    private final int PUBLISHER_NAME = 0;
+    private final int PUBLISHER_SVG_URL = 1;
 
     private final RssFeedRepository rssFeedRepository;
     private final PublisherRepository publisherRepository;
@@ -128,5 +136,42 @@ public class FileUploadServiceImpl implements FileUploadService {
             criteriaDtoList.add(criteriaDto);
         }
         return ResponseEntity.ok().body(criteriaDtoList);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<List<CategoryDto>> saveCategorySVGs(MultipartFile file) {
+        log.info("LINKS IMPORT CSV IS PROCESSING {}", file.getName());
+
+        List<CSVRecord> csvRecordList = getRecords(file);
+        List<CategoryDto> categoryDtoList = new ArrayList<>();
+        for(CSVRecord csvRecord:csvRecordList){
+            Category category = categoryRepository.findByName(csvRecord.get(CATEGORY_NAME));
+            if(category != null){
+                category.setUrlToImage(csvRecord.get(CATEGORY_SVG_URL));
+                CategoryDto categoryDto = new CategoryDto();
+                BeanUtils.copyProperties(category, categoryDto);
+                categoryDtoList.add(categoryDto);
+            }
+        }
+        return ResponseEntity.ok().body(categoryDtoList);
+    }
+
+    @Override
+    public ResponseEntity<List<PublisherDto>> savePublisherSVGs(MultipartFile file) {
+        log.info("LINKS IMPORT CSV IS PROCESSING {}", file.getName());
+
+        List<CSVRecord> csvRecordList = getRecords(file);
+        List<PublisherDto> publisherDtoList = new ArrayList<>();
+        for(CSVRecord csvRecord:csvRecordList){
+            Publisher publisher = publisherRepository.findByName(csvRecord.get(PUBLISHER_NAME));
+            if(publisher != null){
+                publisher.setUrlToImage(csvRecord.get(PUBLISHER_SVG_URL));
+                PublisherDto publisherDto = new PublisherDto();
+                BeanUtils.copyProperties(publisher, publisherDto);
+                publisherDtoList.add(publisherDto);
+            }
+        }
+        return ResponseEntity.ok().body(publisherDtoList);
     }
 }
