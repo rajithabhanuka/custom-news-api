@@ -23,4 +23,5 @@ public class UserEntity extends AbstractEntity implements Transformer {
     private String listCategoryIds;
     private String listPublisherIds;
 
+
 }

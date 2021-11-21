@@ -167,6 +167,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             Publisher publisher = publisherRepository.findByName(csvRecord.get(PUBLISHER_NAME));
             if(publisher != null){
                 publisher.setUrlToImage(csvRecord.get(PUBLISHER_SVG_URL));
+                publisherRepository.save(publisher);
                 PublisherDto publisherDto = new PublisherDto();
                 BeanUtils.copyProperties(publisher, publisherDto);
                 publisherDtoList.add(publisherDto);
