@@ -21,6 +21,7 @@ import org.comppress.customnewsapi.repository.RatingRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.service.BaseSpecification;
+import org.comppress.customnewsapi.utils.CustomStringUtils;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
 import org.springframework.beans.BeanUtils;
@@ -30,7 +31,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -64,6 +67,9 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     public void fetchArticlesWithRome() {
+        // TODO Program Custom Parser
+        // TODO Image Link is in Description
+        // https://www.faz.net/rss/aktuell/wirtschaft/
         for (RssFeed rssFeed : rssFeedRepository.findAll()) {
             SyndFeed feed = null;
             try {
@@ -91,7 +97,6 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
                 continue;
             }
 
-
             log.info("Feed of size " + feed.getEntries().size());
             for (SyndEntry syndEntry : feed.getEntries()) {
                 Article article = customMappingSyndEntryImplToArticle(syndEntry, rssFeed);
@@ -107,27 +112,56 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
     }
 
+    @Override
+    public void updateArticlePayWall(int pageSize) {
+        Page<Article> articleList = articleRepository.findByIsAccessibleUpdatedFalse(PageRequest.of(0, pageSize));
+        articleList.toList().stream().parallel().forEach(this::update);
+    }
+
+    @Async("ThreadPoolExecutor")
+    public void update(Article article) {
+        try {
+            Thread.sleep(3000);
+            log.info("THREAD IS PICKING {}",article.getId());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public Article customMappingSyndEntryImplToArticle(SyndEntry syndEntry, RssFeed rssFeed) {
-        Article article = new Article();
+        Article article = new Article(); // TODO Use Mapper
         if (syndEntry.getAuthor() != null) {
             article.setAuthor(syndEntry.getAuthor());
         }
         if (syndEntry.getTitle() != null) {
             article.setTitle(syndEntry.getTitle());
         }
-        if (syndEntry.getDescription() != null) {
-            article.setDescription(syndEntry.getDescription().getValue());
-        }
         if (syndEntry.getLink() != null) {
             article.setUrl(syndEntry.getLink());
         }
         if (syndEntry.getEnclosures() != null && !syndEntry.getEnclosures().isEmpty()) {
             article.setUrlToImage(syndEntry.getEnclosures().get(0).getUrl());
-        } else {
-            // User Dom Parser to check for the Image
-            article.setUrlToImage("No Image Found");
         }
+        else {
+            String imgUrl = null;
+            if (syndEntry.getDescription() != null) {
+                imgUrl = CustomStringUtils.getImgLink(syndEntry.getDescription().getValue());
 
+                /*if(imgUrl == null){
+                    imgUrl = CustomStringUtils.getImgLinkWithMatcher(syndEntry.getDescription().getValue());
+                    // DO more
+                }*/
+            }
+            if(imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0){
+                imgUrl = CustomStringUtils.getImgLink(syndEntry.getContents().get(0).getValue());
+            }
+            // User Dom Parser to check for the Image
+            if (imgUrl == null || imgUrl.isEmpty()) {
+                article.setUrlToImage("No Image Found");
+            }else {
+                article.setUrlToImage(imgUrl);
+            }
+        }
         // Sometimes the url, sometimes guid provided by the news agencies
         if (syndEntry.getUri() != null) {
             article.setGuid(syndEntry.getUri());

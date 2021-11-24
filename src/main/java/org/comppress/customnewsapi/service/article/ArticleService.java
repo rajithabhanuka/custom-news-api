@@ -1,6 +1,5 @@
 package org.comppress.customnewsapi.service.article;
 
-import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.springframework.http.ResponseEntity;
 
@@ -16,6 +15,7 @@ public interface ArticleService {
     // TODO improve Method
     void fetchArticlesWithRome();
 
+    void updateArticlePayWall(int pageSize);
 
     ResponseEntity<GenericPage> getRatedArticles(int page, int size,
                                                  String title, String category,

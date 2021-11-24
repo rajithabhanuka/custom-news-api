@@ -2,7 +2,6 @@ package org.comppress.customnewsapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.comppress.customnewsapi.service.article.ArticleServiceImpl;
 
 import java.time.LocalDateTime;
 

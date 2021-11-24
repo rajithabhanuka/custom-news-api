@@ -19,7 +19,7 @@ public class NewsFeedController {
     public NewsFeedController(ArticleService articleService) {
         this.articleService = articleService;
     }
-    @Value("${scheduler.enabled}")
+    @Value("${scheduler.news-feed.enabled}")
     private boolean enabled;
 
     @GetMapping

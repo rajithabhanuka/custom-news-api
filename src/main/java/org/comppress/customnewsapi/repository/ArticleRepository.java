@@ -1,8 +1,6 @@
 package org.comppress.customnewsapi.repository;
 
-import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.entity.Article;
-import org.comppress.customnewsapi.utils.StaticSQLQueries;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {
+
+    Page<Article> findByIsAccessibleUpdatedFalse(Pageable pageable);
 
     @Query(value = "SELECT * FROM article ORDER BY RAND() LIMIT :numberArticles ", nativeQuery = true)
     List<Article> retrieveRandomArticles(@Param("numberArticles") Integer numberArticles);

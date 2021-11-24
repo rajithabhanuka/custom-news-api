@@ -3,6 +3,7 @@ package org.comppress.customnewsapi.service.home;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.*;
 import org.comppress.customnewsapi.entity.Category;
+import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.UserEntity;
 import org.comppress.customnewsapi.repository.*;
 import org.comppress.customnewsapi.service.BaseSpecification;
@@ -11,7 +12,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,30 +40,47 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         this.publisherRepository = publisherRepository;
     }
 
-    @Override
-    public ResponseEntity<UserPreferenceDto> getUserPreference(String lang, Long categoryId,
-                                                               List<Long> publisherIds, String fromDate, String toDate) {
-
-        // TODO Ignore Article for Category that have an Empty thing
-        // TODO Possibility to pass categoryIds list for User with GUID Auth
-
-        // Get User via Security Context
+    public List<Long> getPublisher(List<Long> publisherIds, String lang){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity userEntity = userRepository.findByUsername(authentication.getName());
-        // TODO Add Pagination Categories
-        Specification<Category> categorySpecification = null;
-        if (userEntity.getListCategoryIds() != null) {
-            categorySpecification = querySpecificationIn(
-                    Stream.of(userEntity.getListCategoryIds().split(","))
-                            .map(Integer::parseInt)
-                            .collect(Collectors.toList()), "id");
-        }
-        Specification<Category> categorySpecification1 = querySpecificationLike(lang,"lang");
-        Specification<Category> spec = Specification.where(categorySpecification).and(categorySpecification1);
-        // Add Lang here
 
-        List<CustomCategoryDto> customCategoryDtos = categoryRepository.findAll(spec).stream().map(s -> setArticles(s, lang,
-                publisherIds, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate))).collect(Collectors.toList());
+        if(userEntity != null){
+            if(userEntity.getListPublisherIds() != null){
+                publisherIds = Stream.of(userEntity.getListPublisherIds().split(",")).map(Long::parseLong).collect(Collectors.toList());
+            }
+        }
+        if (publisherIds == null || publisherIds.isEmpty() || doesNotContainAnyPublishersFromLang(publisherIds,lang)) {
+            publisherIds = publisherRepository.findByLang(lang).stream().map(publisher -> publisher.getId()).collect(Collectors.toList());
+        }
+        return publisherIds;
+    }
+
+    public List<Long> getCategory(List<Long> categoryIds, String lang){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+
+        if(userEntity != null){
+            if(userEntity.getListCategoryIds() != null){
+                categoryIds = Stream.of(userEntity.getListCategoryIds().split(",")).map(Long::parseLong).collect(Collectors.toList());
+            }
+        }
+
+        if (categoryIds == null || categoryIds.isEmpty() || doesNotContainAnyCategoriesFromLang(categoryIds,lang)) {
+            categoryIds = categoryRepository.findByLang(lang).stream().map(category -> category.getId()).collect(Collectors.toList());
+        }
+        return categoryIds;
+    }
+
+    @Override
+    public ResponseEntity<UserPreferenceDto> getUserPreference(String lang, List<Long> categoryIds,
+                                                               List<Long> publisherIds, String fromDate, String toDate) {
+
+        final List<Long> finalPubIds = getPublisher(publisherIds, lang);
+        categoryIds = getCategory(categoryIds,lang);
+        // Get User via Security Context
+
+        List<CustomCategoryDto> customCategoryDtos = categoryRepository.findByCategoryIds(categoryIds).stream().map(s -> setArticles(s, lang,
+                finalPubIds, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate))).collect(Collectors.toList());
         UserPreferenceDto userPreferenceDto = new UserPreferenceDto();
         userPreferenceDto.setCategoryDtoList(customCategoryDtos);
         return ResponseEntity.ok().body(userPreferenceDto);
@@ -78,7 +95,7 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         if (publisherIds == null || publisherIds.isEmpty()) {
             publisherIds = publisherRepository.findByLang(lang).stream().map(publisher -> publisher.getId()).collect(Collectors.toList());
         }
-        // TODO Do we need the language here? As we filter with pub and category before
+
         Page<ArticleRepository.CustomRatedArticle> articlesPage = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguage(
                 categoryIds, publisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size)
         );
@@ -103,12 +120,26 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         }
         Long categoryId = category.getId();
         ArticleRepository.CustomRatedArticle article = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguageAndLimit(categoryId,publisherIds,lang,fromDate,toDate);
+        RatingArticleDto ratingArticleDto = new RatingArticleDto();
         CustomCategoryDto customCategoryDto = new CustomCategoryDto();
-        List<ArticleRepository.CustomRatedArticle> list = new ArrayList<>();
-        list.add(article);
-        customCategoryDto.setArticleDtoList(list);
+        BeanUtils.copyProperties(article,ratingArticleDto);
+        customCategoryDto.setArticle(ratingArticleDto);
         BeanUtils.copyProperties(category, customCategoryDto);
-        // TODO return Name Lang, Problem Name is saved at CategoryTranslation, would require another db query, or load initially a Table of Category Translations once and pass it to the Method
         return customCategoryDto;
     }
+
+    private boolean doesNotContainAnyCategoriesFromLang(List<Long> listCategoryIds, String lang) {
+        for(Category category:categoryRepository.findByLang(lang)){
+            if(listCategoryIds.contains(category.getId())) return false;
+        }
+        return true;
+    }
+
+    private boolean doesNotContainAnyPublishersFromLang(List<Long> listPublisherIds, String lang) {
+        for (Publisher publisher : publisherRepository.findByLang(lang)) {
+            if (listPublisherIds.contains(publisher.getId())) return false;
+        }
+        return true;
+    }
+
 }

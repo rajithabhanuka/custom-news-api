@@ -30,6 +30,8 @@ public class Article extends AbstractEntity{
     private Long rssFeedId;
     @Column(columnDefinition = "integer default 0",nullable = false)
     private Integer countRatings = 0;
+    private boolean isAccessible = true;
+    private boolean isAccessibleUpdated = false;
 
     public ArticleDto toDto(){
         ArticleDto articleDto = new ArticleDto();

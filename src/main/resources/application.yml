@@ -26,8 +26,23 @@ server:
   servlet:
     context-path: /custom-news-api
 scheduler:
-  triggeringIntervalMilliSeconds: 20000
-  initialDelayIntervalMilliSeconds: 5000
-  enabled: no
+  news-feed:
+    triggeringIntervalMilliSeconds: 20000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
+  paywall:
+    triggeringIntervalMilliSeconds: 20000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
+    page-size: 100
 jwt:
   secret: secret
+executor:
+  core:
+    pool:
+      size: 500
+  max:
+    pool:
+      size: 1000
+  queue:
+    size: 250
