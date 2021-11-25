@@ -15,10 +15,8 @@ public class ArticleDto {
     private String url;
     @JsonProperty(value = "url_to_image")
     private String urlToImage;
-    private String guid;
     @JsonProperty(value = "published_at")
     private LocalDateTime publishedAt;
-    private String content;
     @JsonProperty(value = "count_ratings")
     private Integer countRatings;
 

@@ -10,8 +10,10 @@ import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
+import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.dto.xml.ItemDto;
+import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.mapper.MapstructMapper;
@@ -19,7 +21,6 @@ import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.comppress.customnewsapi.repository.RatingRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
-import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.CustomStringUtils;
 import org.comppress.customnewsapi.utils.DateUtils;
@@ -33,7 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,7 +45,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -272,7 +275,14 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
                 title, category, publisherNewsPaper, lang,
                 DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
-        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleList);
+        List<CustomRatedArticleDto> customRatedArticleDtos = new ArrayList<>();
+        for(ArticleRepository.CustomRatedArticle customRatedArticle:customRatedArticleList){
+            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
+            BeanUtils.copyProperties(customRatedArticle,customRatedArticleDto);
+            customRatedArticleDtos.add(customRatedArticleDto);
+        }
+
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtos);
     }
 
     @Override

@@ -7,6 +7,6 @@ public class CustomCategoryDto {
 
     private String name;
     private Long id;
-    private RatingArticleDto article;
+    private CustomRatedArticleDto article;
 
 }

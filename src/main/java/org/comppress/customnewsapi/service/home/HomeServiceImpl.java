@@ -122,9 +122,9 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         ArticleRepository.CustomRatedArticle article = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguageAndLimit(categoryId,publisherIds,lang,fromDate,toDate);
         CustomCategoryDto customCategoryDto = new CustomCategoryDto();
         if(article != null){
-            RatingArticleDto ratingArticleDto = new RatingArticleDto();
-            BeanUtils.copyProperties(article,ratingArticleDto);
-            customCategoryDto.setArticle(ratingArticleDto);
+            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
+            BeanUtils.copyProperties(article,customRatedArticleDto);
+            customCategoryDto.setArticle(customRatedArticleDto);
         }else {
             customCategoryDto.setArticle(null);
         }
