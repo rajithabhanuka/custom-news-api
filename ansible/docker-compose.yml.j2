@@ -3,7 +3,8 @@ news-api:
   links:
     - mysql:mysql
   environment:
-    SCHEDULER_ENABLED: "false"
+    SCHEDULER_NEWS-FEED_ENABLED: "false"
+    SCHEDULER_PAYWALL_ENABLED: "false"
     SERVER_PORT: 80
     SPRING_DATASOURCE_PASSWORD: {{ password }}
     SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
