@@ -3,8 +3,6 @@ package org.comppress.customnewsapi.scheduler;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.comppress.customnewsapi.service.article.ArticleService;
-import org.comppress.customnewsapi.service.article.ArticleServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -30,7 +28,7 @@ public class NewsFeedScheduler {
     public void saveNewsFeed(){
         if(enabled){
             log.info("Scheduler feeding data!");
-            articleService.fetchArticlesWithRome();
+            articleService.fetchArticlesFromRssFeeds();
         }
     }
 

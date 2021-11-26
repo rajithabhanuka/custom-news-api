@@ -30,7 +30,7 @@ public class PublisherController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<GenericPage<PublisherUserDto>> getPublisherUser(
+    public ResponseEntity<GenericPage> getPublisherUser(
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size

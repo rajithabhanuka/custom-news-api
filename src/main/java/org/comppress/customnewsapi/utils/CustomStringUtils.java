@@ -5,8 +5,9 @@ import java.util.regex.Pattern;
 
 public class CustomStringUtils {
 
-    public static String getImgLink(String xmlInput){
-        int index = xmlInput.indexOf("src=\"");
+    public static String getImgLinkFromTagSrc(String xmlInput, String tag){
+        // int index = xmlInput.indexOf("src=\"");
+        int index = xmlInput.indexOf(tag);
         if(index == -1) return null;
         String substr = xmlInput.substring(index + 5);
         int endIndex = substr.indexOf("\"");

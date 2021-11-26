@@ -1,10 +1,7 @@
 package org.comppress.customnewsapi.service.article;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.ParsingFeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
@@ -12,14 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
-import org.comppress.customnewsapi.dto.xml.ItemDto;
-import org.comppress.customnewsapi.dto.xml.RssDto;
 import org.comppress.customnewsapi.entity.Article;
+import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.RssFeed;
-import org.comppress.customnewsapi.mapper.MapstructMapper;
 import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
-import org.comppress.customnewsapi.repository.RatingRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.CustomStringUtils;
@@ -37,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,9 +39,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -56,25 +47,19 @@ import java.util.stream.Collectors;
 public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
     private final RssFeedRepository rssFeedRepository;
-    private final MapstructMapper mapstructMapper;
     private final ArticleRepository articleRepository;
-    private final RatingRepository ratingRepository;
     private final PublisherRepository publisherRepository;
 
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, MapstructMapper mapstructMapper, ArticleRepository articleRepository, RatingRepository ratingRepository, PublisherRepository publisherRepository) {
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository) {
         this.rssFeedRepository = rssFeedRepository;
-        this.mapstructMapper = mapstructMapper;
         this.articleRepository = articleRepository;
-        this.ratingRepository = ratingRepository;
         this.publisherRepository = publisherRepository;
     }
 
-    public void fetchArticlesWithRome() {
-        // TODO Program Custom Parser
-        // TODO Image Link is in Description
-        // https://www.faz.net/rss/aktuell/wirtschaft/
+    public void fetchArticlesFromRssFeeds() {
+
         for (RssFeed rssFeed : rssFeedRepository.findAll()) {
-            SyndFeed feed = null;
+            SyndFeed feed;
             try {
                 URL feedSource = new URL(rssFeed.getUrl());
                 SyndFeedInput input = new SyndFeedInput();
@@ -86,53 +71,49 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             } catch (FileNotFoundException e) {
                 log.error("FileNotFoundException most likely a dead link, check the url " + rssFeed.getUrl());
                 continue;
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                continue;
-            } catch (FeedException e) {
-                e.printStackTrace();
-                continue;
-            } catch (IOException e) {
-                e.printStackTrace();
-                continue;
             } catch (Exception e) {
                 e.printStackTrace();
                 continue;
             }
 
             log.info("Feed of size " + feed.getEntries().size());
-            for (SyndEntry syndEntry : feed.getEntries()) {
-                Article article = customMappingSyndEntryImplToArticle(syndEntry, rssFeed);
-                if (articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
-                try {
-                    articleRepository.save(article);
-                } catch (DataIntegrityViolationException e) {
-                    log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
-                } catch (Exception e) {
-                    log.error("Error while saving data {}", e.getLocalizedMessage());
-                }
+            saveArticle(rssFeed, feed);
+        }
+    }
+
+    private void saveArticle(RssFeed rssFeed, SyndFeed feed) {
+        for (SyndEntry syndEntry : feed.getEntries()) {
+            Article article = customMappingSyndEntryImplToArticle(syndEntry, rssFeed);
+            if (articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
+            try {
+                articleRepository.save(article);
+            } catch (DataIntegrityViolationException e) {
+                log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
+            } catch (Exception e) {
+                log.error("Error while saving data {}", e.getLocalizedMessage());
             }
         }
     }
 
     @Override
-    public void updateArticlePayWall(int pageSize) {
-        Page<Article> articleList = articleRepository.findByIsAccessibleUpdatedFalse(PageRequest.of(0, pageSize));
-        articleList.toList().stream().parallel().forEach(this::update);
-    }
-
     @Async("ThreadPoolExecutor")
-    public void update(Article article) {
+    public void update(Article article) throws URISyntaxException, IOException {
         try {
-            Thread.sleep(3000);
-            log.info("THREAD IS PICKING {}",article.getId());
+            String response = urlReader(article.getUrl());
+            if(response.contains("\"isAccessibleForFree\":false") || response.contains("\"isAccessibleForFree\": false")){
+                article.setAccessible(false);
+            }else {
+                article.setAccessible(true);
+            }
+            article.setAccessibleUpdated(true);
+            articleRepository.save(article);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     public Article customMappingSyndEntryImplToArticle(SyndEntry syndEntry, RssFeed rssFeed) {
-        Article article = new Article(); // TODO Use Mapper
+        Article article = new Article();
         if (syndEntry.getAuthor() != null) {
             article.setAuthor(syndEntry.getAuthor());
         }
@@ -148,24 +129,21 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         else {
             String imgUrl = null;
             if (syndEntry.getDescription() != null) {
-                imgUrl = CustomStringUtils.getImgLink(syndEntry.getDescription().getValue());
-
-                /*if(imgUrl == null){
-                    imgUrl = CustomStringUtils.getImgLinkWithMatcher(syndEntry.getDescription().getValue());
-                    // DO more
-                }*/
+                imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getDescription().getValue(), "src=\"");
             }
             if(imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0){
-                imgUrl = CustomStringUtils.getImgLink(syndEntry.getContents().get(0).getValue());
+                imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "src=\"");
             }
-            // User Dom Parser to check for the Image
+            if(imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0){
+                imgUrl =  CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "url=\"");
+            }
             if (imgUrl == null || imgUrl.isEmpty()) {
+                // TODO Default Image
                 article.setUrlToImage("No Image Found");
             }else {
                 article.setUrlToImage(imgUrl);
             }
         }
-        // Sometimes the url, sometimes guid provided by the news agencies
         if (syndEntry.getUri() != null) {
             article.setGuid(syndEntry.getUri());
         }
@@ -179,59 +157,6 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
         article.setRssFeedId(rssFeed.getId());
         return article;
-    }
-
-    public void fetchArticles() {
-
-        List<String> listWhereExceptionsHappen = new ArrayList<>();
-
-        for (RssFeed rssFeed : rssFeedRepository.findAll()) {
-
-            RssDto rssDto = null;
-            String webPage;
-            try {
-                webPage = urlReader(rssFeed.getUrl());
-                XmlMapper xmlMapper = new XmlMapper();
-                xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                xmlMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-                rssDto = xmlMapper.readValue(webPage, RssDto.class);
-            } catch (Exception e) {
-                listWhereExceptionsHappen.add(rssFeed.getUrl());
-                log.error("Error while converting data from xml {}", e.getLocalizedMessage());
-                e.printStackTrace();
-            }
-            if (rssDto == null) {
-                log.error("rssDto is null for Rss Feed " + rssFeed.getUrl());
-                continue;
-            }
-            List<ItemDto> itemDtoList = rssDto.getChannel().getItem();
-            if (itemDtoList == null) {
-                log.error("itemDtoList is null for Rss Feed " + rssFeed.getUrl());
-                continue;
-            }
-            // Only want a map of guid
-            List<Article> articlesInDatabase = articleRepository.findAll();
-            Map<String, String> mapGuid = new HashMap<>();
-            /*
-            // not scalable, but a good idea :)
-            articlesInDatabase.forEach(article -> {
-                mapGuid.put(article.getGuid(), "exists");
-            });
-             */
-            itemDtoList.forEach(itemDto -> {
-                Article article = mapstructMapper.itemDtoToArticle(itemDto);
-                article.setRssFeedId(rssFeed.getId());
-                try {
-                    articleRepository.save(article);
-                } catch (DataIntegrityViolationException e) {
-                    mapGuid.put(article.getGuid(), "duplicate");
-                    log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
-                } catch (Exception e) {
-                    log.error("Error while saving data {}", e.getLocalizedMessage());
-                }
-            });
-        }
-        log.info("Exception happened in " + listWhereExceptionsHappen + " urls");
     }
 
     private String urlReader(String url) throws URISyntaxException, IOException, InterruptedException {
@@ -252,7 +177,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return response.body();
     }
 
-    public ResponseEntity<GenericPage> getArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<ArticleDto>> getArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
 
         Page<Article> articlesPage = articleRepository
                 .retrieveByCategoryOrPublisherName(category,
@@ -262,7 +187,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
+        genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
@@ -270,30 +195,34 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
-
+    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String lang, String fromDate, String toDate) {
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
                 title, category, publisherNewsPaper, lang,
                 DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
-        List<CustomRatedArticleDto> customRatedArticleDtos = new ArrayList<>();
-        for(ArticleRepository.CustomRatedArticle customRatedArticle:customRatedArticleList){
+        /* // TODO WHY CAN WE NOT USE THE COUNT QUERY HERE; SQL ERROR
+        Page<ArticleRepository.CustomRatedArticle> customRatedArticlePage = articleRepository.retrieveAllRatedArticlesInDescOrder(
+                title, category, publisherNewsPaper, lang,
+                DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate),PageRequest.of(page,size));
+        getCustomRatedArticleDtoGenericPage(customRatedArticlePage)
+        */
+        List<CustomRatedArticleDto> customRatedArticleDtoList = new ArrayList<>();
+        customRatedArticleList.forEach(customRatedArticle -> {
             CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
             BeanUtils.copyProperties(customRatedArticle,customRatedArticleDto);
-            customRatedArticleDtos.add(customRatedArticleDto);
-        }
-
-        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtos);
+            customRatedArticleDtoList.add(customRatedArticleDto);
+        });
+        return PageHolderUtils.getResponseEntityGenericPage(page,size,customRatedArticleDtoList);
     }
 
     @Override
-    public ResponseEntity<GenericPage> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
         if(listPublisherIds == null){
-            listPublisherIds = publisherRepository.findAll().stream().map(p -> p.getId()).collect(Collectors.toList());
+            listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
         Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds,lang,DateUtils.stringToLocalDateTime(fromDate),DateUtils.stringToLocalDateTime(fromDate), PageRequest.of(page, size));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(s -> s.toDto()).collect(Collectors.toList()));
+        genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);

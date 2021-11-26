@@ -25,7 +25,7 @@ public class GenericPage<T> {
     @JsonProperty("current_page")
     private int pageNumber;
     @JsonProperty("current_page_size")
-    private int pageNumberOfElements;
+    private int size;
     @JsonProperty("data")
     private List<T> data;
 

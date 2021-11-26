@@ -9,7 +9,7 @@ import java.util.List;
 
 public class PageHolderUtils {
 
-    public static ResponseEntity getResponseEntityGenericPage(int page, int size, List list) {
+    public static ResponseEntity<GenericPage> getResponseEntityGenericPage(int page, int size, List list) {
         PagedListHolder pagedListHolder = new PagedListHolder(list);
         pagedListHolder.setPageSize(size);  // number of items per page
         pagedListHolder.setPage(page);      // set to first page
@@ -21,7 +21,7 @@ public class PageHolderUtils {
                         .isFirst(pagedListHolder.isFirstPage())
                         .isLast(pagedListHolder.isLastPage())
                         .pageNumber(pagedListHolder.getPage())
-                        .pageNumberOfElements(pagedListHolder.getPageSize())
+                        .size(pagedListHolder.getPageSize())
                         .data(pagedListHolder.getPageList())
                         .build());
     }

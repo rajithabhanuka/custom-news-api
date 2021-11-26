@@ -1,11 +1,17 @@
 package org.comppress.customnewsapi.service.home;
 
 import lombok.extern.slf4j.Slf4j;
-import org.comppress.customnewsapi.dto.*;
+import org.comppress.customnewsapi.dto.CustomCategoryDto;
+import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
+import org.comppress.customnewsapi.dto.GenericPage;
+import org.comppress.customnewsapi.dto.UserPreferenceDto;
 import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.UserEntity;
-import org.comppress.customnewsapi.repository.*;
+import org.comppress.customnewsapi.repository.ArticleRepository;
+import org.comppress.customnewsapi.repository.CategoryRepository;
+import org.comppress.customnewsapi.repository.PublisherRepository;
+import org.comppress.customnewsapi.repository.UserRepository;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.springframework.beans.BeanUtils;
@@ -18,7 +24,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,17 +104,7 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         Page<ArticleRepository.CustomRatedArticle> articlesPage = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguage(
                 categoryIds, publisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size)
         );
-        GenericPage<CustomRatedArticleDto> genericPage = new GenericPage<>();
-        List<CustomRatedArticleDto> customRatedArticleDtos = new ArrayList<>();
-        for(ArticleRepository.CustomRatedArticle customRatedArticle: articlesPage.toList()){
-            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
-            BeanUtils.copyProperties(customRatedArticle,customRatedArticleDto);
-            customRatedArticleDtos.add(customRatedArticleDto);
-        }
-        genericPage.setData(customRatedArticleDtos);
-        BeanUtils.copyProperties(articlesPage, genericPage);
-
-        return ResponseEntity.ok().body(genericPage);
+        return ResponseEntity.ok().body(getCustomRatedArticleDtoGenericPage(articlesPage));
     }
 
     private CustomCategoryDto setArticles(Category category, String lang,

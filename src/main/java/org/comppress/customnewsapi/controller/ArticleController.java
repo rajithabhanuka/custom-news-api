@@ -24,7 +24,7 @@ public class ArticleController {
     }
 
     @GetMapping
-    public ResponseEntity<GenericPage> getArticles(
+    public ResponseEntity<GenericPage<ArticleDto>> getArticles(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
             @RequestParam(value = "title", required = false) String title,
@@ -38,7 +38,7 @@ public class ArticleController {
     }
 
     @GetMapping("/unrated")
-    public ResponseEntity<GenericPage> getArticlesNotRated(
+    public ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
             @RequestParam(value = "categoryId") Long category,
@@ -65,5 +65,4 @@ public class ArticleController {
         // Check here for User Preferences and then pass
         return articleService.getRatedArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
     }
-    ///custom-news-api/home
 }

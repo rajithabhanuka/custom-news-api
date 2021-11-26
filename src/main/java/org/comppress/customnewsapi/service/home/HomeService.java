@@ -3,11 +3,12 @@ package org.comppress.customnewsapi.service.home;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.dto.UserPreferenceDto;
-import org.comppress.customnewsapi.repository.ArticleRepository;
+import org.comppress.customnewsapi.utils.GenerateGenericPageUtils;
 import org.springframework.http.ResponseEntity;
+
 import java.util.List;
 
-public interface HomeService {
+public interface HomeService extends GenerateGenericPageUtils {
     ResponseEntity<UserPreferenceDto> getUserPreference(String lang, List<Long> categoryId,
                                                         List<Long> publisherIds, String fromDate, String toDate);
 

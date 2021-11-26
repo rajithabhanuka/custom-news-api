@@ -19,5 +19,7 @@ public class ArticleDto {
     private LocalDateTime publishedAt;
     @JsonProperty(value = "count_ratings")
     private Integer countRatings;
+    @JsonProperty(value = "is_accessible")
+    private boolean isAccessible;
 
 }

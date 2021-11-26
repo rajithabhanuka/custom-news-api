@@ -50,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public ResponseEntity<GenericPage<CategoryUserDto>> getCategoriesUser(String lang, int page, int size) {
+    public ResponseEntity<GenericPage> getCategoriesUser(String lang, int page, int size) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity userEntity = userRepository.findByUsername(authentication.getName());

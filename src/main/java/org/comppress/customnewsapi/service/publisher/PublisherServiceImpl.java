@@ -11,7 +11,6 @@ import org.comppress.customnewsapi.repository.UserRepository;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -47,12 +46,11 @@ public class PublisherServiceImpl implements PublisherService {
         GenericPage<PublisherDto> genericPage = new GenericPage<>();
         genericPage.setData(publisherPage.stream().map(publisher -> mapstructMapper.publisherToPublisherDto(publisher)).collect(Collectors.toList()));
         BeanUtils.copyProperties(publisherPage, genericPage);
-
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
     }
 
     @Override
-    public ResponseEntity<GenericPage<PublisherUserDto>> getPublisherUser(String lang, int page, int size) {
+    public ResponseEntity<GenericPage> getPublisherUser(String lang, int page, int size) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity userEntity = userRepository.findByUsername(authentication.getName());
 
@@ -83,10 +81,6 @@ public class PublisherServiceImpl implements PublisherService {
                 }
                 publisherUserDtoList.add(publisherUserDto);
             }
-
-            PagedListHolder pagedListHolder = new PagedListHolder(publisherUserDtoList);
-            pagedListHolder.setPageSize(size);  // number of items per page
-            pagedListHolder.setPage(page);      // set to first page
 
             return PageHolderUtils.getResponseEntityGenericPage(page, size, publisherUserDtoList);
         }

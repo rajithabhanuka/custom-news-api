@@ -1,7 +1,6 @@
 package org.comppress.customnewsapi.controller;
 
 import org.comppress.customnewsapi.dto.CategoryDto;
-import org.comppress.customnewsapi.dto.CategoryUserDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.service.category.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/categories")
@@ -34,7 +31,7 @@ public class CategoryController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<GenericPage<CategoryUserDto>> getCategoriesUser(
+    public ResponseEntity<GenericPage> getCategoriesUser(
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size
