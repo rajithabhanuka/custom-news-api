@@ -27,6 +27,6 @@ public class CustomRatedArticleDto {
     @JsonProperty(value = "total_average_rating")
     private double total_average_rating;
     @JsonProperty(value = "is_accessible")
-    private boolean is_accessible;
+    private Boolean is_accessible;
 
 }
