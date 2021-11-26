@@ -112,13 +112,22 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
     }
 
+    private String formatText(String text){
+        //TODO ENHANCE, FILTER ALSO FOR HTML TAGS LIKE <p>
+        //String title = Text.normalizeString(text);
+        text = text.replace("\n","");
+        text = text.replace("\t","");
+        text = text.replace("\r","");
+        return text;
+    }
+
     public Article customMappingSyndEntryImplToArticle(SyndEntry syndEntry, RssFeed rssFeed) {
         Article article = new Article();
         if (syndEntry.getAuthor() != null) {
             article.setAuthor(syndEntry.getAuthor());
         }
         if (syndEntry.getTitle() != null) {
-            article.setTitle(syndEntry.getTitle());
+            article.setTitle(formatText(syndEntry.getTitle()));
         }
         if (syndEntry.getLink() != null) {
             article.setUrl(syndEntry.getLink());
@@ -153,8 +162,12 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
                     .toLocalDateTime());
         }
         if (syndEntry.getContents() != null && !syndEntry.getContents().isEmpty()) {
-            article.setContent(syndEntry.getContents().get(0).getValue());
+            article.setContent(formatText(syndEntry.getContents().get(0).getValue()));
         }
+        if(syndEntry.getDescription() != null){
+            article.setDescription(formatText(syndEntry.getDescription().getValue()));
+        }
+
         article.setRssFeedId(rssFeed.getId());
         return article;
     }
