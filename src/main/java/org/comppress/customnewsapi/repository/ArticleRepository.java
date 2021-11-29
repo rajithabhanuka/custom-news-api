@@ -91,17 +91,15 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=2) as average_rating_criteria_2, " +
             "(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=3) as average_rating_criteria_3 " +
             "FROM rating r group by r.article_id) as t INNER JOIN article a ON a.id= t.article_id INNER JOIN rss_feed rf ON rf.id = a.rss_feed_id INNER JOIN category c ON c.id = rf.category_id INNER JOIN publisher p ON p.id = rf.publisher_id " +
-            "WHERE(:category is null or :category = '' or c.name LIKE %:category%) AND " +
-            "(:publisherName is null or :publisherName = '' or p.name LIKE %:publisherName%) AND " +
-            "(:title is null or :title = '' or a.title LIKE %:title%) AND " +
+            " WHERE rf.category_id = :categoryId AND " +
+            "rf.publisher_id in (:publisherIds) AND " +
             "(:language is null or :language = '' or rf.lang LIKE :language) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC;"
             ,nativeQuery = true)
     List<CustomRatedArticle> retrieveAllRatedArticlesInDescOrder(
-            @Param("category") String category,
-            @Param("publisherName") String publisherName,
-            @Param("title") String title,
+            @Param("categoryId") Long categoryId,
+            @Param("publisherIds") List<Long> publisherIds,
             @Param("language") String language,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);

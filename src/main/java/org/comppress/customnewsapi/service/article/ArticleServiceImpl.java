@@ -249,9 +249,14 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, String title, String category, String publisherNewsPaper, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage> getRatedArticles(int page, int size, Long categoryId,
+                                                        List<Long> listPublisherIds, String lang,
+                                                        String fromDate, String toDate) {
+        if (listPublisherIds == null) {
+            listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
+        }
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
-                title, category, publisherNewsPaper, lang,
+                categoryId, listPublisherIds, lang,
                 DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
         /* // TODO WHY CAN WE NOT USE THE COUNT QUERY HERE; SQL ERROR
         Page<ArticleRepository.CustomRatedArticle> customRatedArticlePage = articleRepository.retrieveAllRatedArticlesInDescOrder(

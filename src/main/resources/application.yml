@@ -33,11 +33,11 @@ scheduler:
   news-feed:
     triggeringIntervalMilliSeconds: 40000
     initialDelayIntervalMilliSeconds: 5000
-    enabled: yes
+    enabled: no
   paywall:
     triggeringIntervalMilliSeconds: 20000
     initialDelayIntervalMilliSeconds: 4000
-    enabled: yes
+    enabled: no
     page-size: 100
 jwt:
   secret: secret

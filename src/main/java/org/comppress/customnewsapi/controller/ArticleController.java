@@ -41,13 +41,13 @@ public class ArticleController {
     public ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
-            @RequestParam(value = "categoryId") Long category,
+            @RequestParam(value = "categoryId") Long categoryId,
             @RequestParam(value = "listPublisherIds", required = false) List<Long> listPublisherIds,
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ) {
-        return articleService.getArticlesNotRated(page, size, category, listPublisherIds, lang, fromDate, toDate);
+        return articleService.getArticlesNotRated(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
     }
 
 
@@ -55,14 +55,13 @@ public class ArticleController {
     public ResponseEntity<GenericPage> getRatedArticles(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
-            @RequestParam(value = "title", required = false) String title,
-            @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "publisherNewsPaper", required = false) String publisherNewsPaper,
+            @RequestParam(value = "categoryId") Long categoryId,
+            @RequestParam(value = "listPublisherIds", required = false) List<Long> listPublisherIds,
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ) {
         // Check here for User Preferences and then pass
-        return articleService.getRatedArticles(page, size, title, category, publisherNewsPaper, lang, fromDate, toDate);
+        return articleService.getRatedArticles(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
     }
 }
