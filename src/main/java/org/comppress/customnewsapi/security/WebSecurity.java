@@ -58,7 +58,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .authorizeRequests().antMatchers("/authenticate",
                         "/register", "/forgot-password", "/update-password",
                         "/articles/rated", "/articles" ,"/ratings/submit",
-                        "/publishers", "/categories", "/home","/home/category").permitAll().
+                        "/publishers", "/categories", "/home","/home/category", "/topics").permitAll().
                 // all other requests need to be authenticated
                         anyRequest().authenticated().and().
                 // make sure we use stateless session; session won't be used to

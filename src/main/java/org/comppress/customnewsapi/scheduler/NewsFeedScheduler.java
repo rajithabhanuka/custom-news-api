@@ -27,7 +27,7 @@ public class NewsFeedScheduler {
     @SchedulerLock(name = "newsFeedingScheduler")
     public void saveNewsFeed(){
         if(enabled){
-            log.info("Scheduler feeding data!");
+            log.info("News Scheduler Running!");
             articleService.fetchArticlesFromRssFeeds();
         }
     }

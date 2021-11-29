@@ -1,4 +1,8 @@
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 2
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
@@ -8,7 +12,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
   mail:
     host: smtp.mailbox.org
     username: no-reply@comppress.org
@@ -27,22 +31,29 @@ server:
     context-path: /custom-news-api
 scheduler:
   news-feed:
-    triggeringIntervalMilliSeconds: 20000
+    triggeringIntervalMilliSeconds: 40000
     initialDelayIntervalMilliSeconds: 5000
     enabled: yes
   paywall:
     triggeringIntervalMilliSeconds: 20000
-    initialDelayIntervalMilliSeconds: 5000
-    enabled: no
+    initialDelayIntervalMilliSeconds: 4000
+    enabled: yes
     page-size: 100
 jwt:
   secret: secret
 executor:
   core:
     pool:
-      size: 500
+      size: 100
   max:
     pool:
       size: 1000
   queue:
-    size: 250
+    size: 100
+#logging:
+#  file:
+#    name: /var/log/comppress.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 25MB
+#      max-history: 7

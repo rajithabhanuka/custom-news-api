@@ -6,9 +6,7 @@ import org.springframework.beans.BeanUtils;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @Entity

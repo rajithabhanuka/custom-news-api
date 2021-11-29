@@ -9,17 +9,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
-import org.comppress.customnewsapi.entity.Article;
-import org.comppress.customnewsapi.entity.Publisher;
-import org.comppress.customnewsapi.entity.RssFeed;
-import org.comppress.customnewsapi.repository.ArticleRepository;
-import org.comppress.customnewsapi.repository.PublisherRepository;
-import org.comppress.customnewsapi.repository.RssFeedRepository;
+import org.comppress.customnewsapi.entity.*;
+import org.comppress.customnewsapi.repository.*;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.CustomStringUtils;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
+import org.comppress.customnewsapi.utils.TopicHelper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,7 +37,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,11 +49,16 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     private final RssFeedRepository rssFeedRepository;
     private final ArticleRepository articleRepository;
     private final PublisherRepository publisherRepository;
+    private final TopicRepository topicRepository;
+    private final ArticleTopicRepository articleTopicRepository;
 
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository) {
+    @Autowired
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository, TopicRepository topicRepository, ArticleTopicRepository articleTopicRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.articleRepository = articleRepository;
         this.publisherRepository = publisherRepository;
+        this.topicRepository = topicRepository;
+        this.articleTopicRepository = articleTopicRepository;
     }
 
     public void fetchArticlesFromRssFeeds() {
@@ -87,10 +92,47 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             if (articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
             try {
                 articleRepository.save(article);
+                generateTopics(article);
             } catch (DataIntegrityViolationException e) {
                 log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
             } catch (Exception e) {
                 log.error("Error while saving data {}", e.getLocalizedMessage());
+            }
+        }
+    }
+
+    private void generateTopics(Article article) {
+        List<String> randomTopics = Arrays.asList(TopicHelper.RANDOM_WORDS.split(","));
+        Random random = new Random();
+        int numberTopics = 2;
+        for (int i = 0; i < numberTopics; i++) {
+            String topicName = randomTopics.get(random.nextInt(randomTopics.size()));
+            Topic topic = topicRepository.findByName(topicName);
+            if (topic != null) {
+                try {
+                    if(articleTopicRepository.findByArticleIdAndTopicId(article.getId(),topic.getId()).size() < numberTopics) {
+                        ArticleTopic articleTopic = new ArticleTopic();
+                        articleTopic.setArticleId(article.getId());
+                        articleTopic.setTopicId(topic.getId());
+                        articleTopicRepository.save(articleTopic);
+                    }
+                } catch (Exception ex) {
+                    log.error("Duplicate Exception");
+                }
+            } else {
+                try {
+                    topic = new Topic();
+                    topic.setName(topicName);
+                    topic = topicRepository.save(topic);
+                    if(articleTopicRepository.findByArticleIdAndTopicId(article.getId(),topic.getId()).size() < numberTopics) {
+                        ArticleTopic articleTopic = new ArticleTopic();
+                        articleTopic.setArticleId(article.getId());
+                        articleTopic.setTopicId(topic.getId());
+                        articleTopicRepository.save(articleTopic);
+                    }
+                } catch (Exception ex) {
+                    log.error("Duplicate Exception");
+                }
             }
         }
     }
@@ -100,9 +142,9 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     public void update(Article article) throws URISyntaxException, IOException {
         try {
             String response = urlReader(article.getUrl());
-            if(response.contains("\"isAccessibleForFree\":false") || response.contains("\"isAccessibleForFree\": false")){
+            if (response.contains("\"isAccessibleForFree\":false") || response.contains("\"isAccessibleForFree\": false")) {
                 article.setAccessible(false);
-            }else {
+            } else {
                 article.setAccessible(true);
             }
             article.setAccessibleUpdated(true);
@@ -112,12 +154,12 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
     }
 
-    private String formatText(String text){
+    private String formatText(String text) {
         //TODO ENHANCE, FILTER ALSO FOR HTML TAGS LIKE <p>
         //String title = Text.normalizeString(text);
-        text = text.replace("\n","");
-        text = text.replace("\t","");
-        text = text.replace("\r","");
+        text = text.replace("\n", "");
+        text = text.replace("\t", "");
+        text = text.replace("\r", "");
         return text;
     }
 
@@ -134,22 +176,21 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         }
         if (syndEntry.getEnclosures() != null && !syndEntry.getEnclosures().isEmpty()) {
             article.setUrlToImage(syndEntry.getEnclosures().get(0).getUrl());
-        }
-        else {
+        } else {
             String imgUrl = null;
             if (syndEntry.getDescription() != null) {
                 imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getDescription().getValue(), "src=\"");
             }
-            if(imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0){
+            if (imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0) {
                 imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "src=\"");
             }
-            if(imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0){
-                imgUrl =  CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "url=\"");
+            if (imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0) {
+                imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "url=\"");
             }
             if (imgUrl == null || imgUrl.isEmpty()) {
                 // TODO Default Image
                 article.setUrlToImage("No Image Found");
-            }else {
+            } else {
                 article.setUrlToImage(imgUrl);
             }
         }
@@ -164,7 +205,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         if (syndEntry.getContents() != null && !syndEntry.getContents().isEmpty()) {
             article.setContent(formatText(syndEntry.getContents().get(0).getValue()));
         }
-        if(syndEntry.getDescription() != null){
+        if (syndEntry.getDescription() != null) {
             article.setDescription(formatText(syndEntry.getDescription().getValue()));
         }
 
@@ -190,7 +231,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return response.body();
     }
 
-    public ResponseEntity<GenericPage<ArticleDto>> getArticles(int page, int size, String title, String category, String publisherNewsPaper,String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<ArticleDto>> getArticles(int page, int size, String title, String category, String publisherNewsPaper, String lang, String fromDate, String toDate) {
 
         Page<Article> articlesPage = articleRepository
                 .retrieveByCategoryOrPublisherName(category,
@@ -221,18 +262,18 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         List<CustomRatedArticleDto> customRatedArticleDtoList = new ArrayList<>();
         customRatedArticleList.forEach(customRatedArticle -> {
             CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
-            BeanUtils.copyProperties(customRatedArticle,customRatedArticleDto);
+            BeanUtils.copyProperties(customRatedArticle, customRatedArticleDto);
             customRatedArticleDtoList.add(customRatedArticleDto);
         });
-        return PageHolderUtils.getResponseEntityGenericPage(page,size,customRatedArticleDtoList);
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtoList);
     }
 
     @Override
     public ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
-        if(listPublisherIds == null){
+        if (listPublisherIds == null) {
             listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
-        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds,lang,DateUtils.stringToLocalDateTime(fromDate),DateUtils.stringToLocalDateTime(fromDate), PageRequest.of(page, size));
+        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(fromDate), PageRequest.of(page, size));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
         genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));

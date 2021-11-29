@@ -40,12 +40,13 @@ public class PaywallUpdateScheduler {
     @SchedulerLock(name = "paywallScheduler")
     public void saveNewsFeed() throws URISyntaxException, IOException {
         if(enabled){
-            log.info("Scheduler Running");
+            log.info("Paywall Scheduler Running!");
             Page<Article> articleList = articleRepository.findByIsAccessibleUpdatedFalse(PageRequest.of(0, pageSize));
             for (Article article : articleList.toList()) {
                 articleService.update(article);
             }
         }
     }
+
 
 }

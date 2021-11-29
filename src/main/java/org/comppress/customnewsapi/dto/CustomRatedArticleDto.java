@@ -3,6 +3,8 @@ package org.comppress.customnewsapi.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CustomRatedArticleDto {
 
@@ -28,5 +30,7 @@ public class CustomRatedArticleDto {
     private double total_average_rating;
     @JsonProperty(value = "is_accessible")
     private Boolean is_accessible;
+    @JsonProperty(value = "topics")
+    List<TopicDto> topicDtoList;
 
 }
