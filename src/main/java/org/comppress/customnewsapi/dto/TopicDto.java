@@ -7,4 +7,6 @@ import lombok.Data;
 public class TopicDto {
     @JsonProperty(value = "topic_name")
     private String name;
+    @JsonProperty(value = "topic_id")
+    private Long id;
 }

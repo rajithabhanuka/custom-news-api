@@ -30,7 +30,14 @@ public class CustomRatedArticleDto {
     private double total_average_rating;
     @JsonProperty(value = "is_accessible")
     private Boolean is_accessible;
+    @JsonProperty(value = "publisher_name")
+    private String publisher_name;
+    @JsonProperty(value = "publisher_id")
+    private Long publisher_id;
     @JsonProperty(value = "topics")
     List<TopicDto> topicDtoList;
+    @JsonProperty(value = "count_comment")
+    private Integer count_comment;
+
 
 }

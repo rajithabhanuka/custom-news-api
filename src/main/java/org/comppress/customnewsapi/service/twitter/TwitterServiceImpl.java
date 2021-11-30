@@ -1,5 +1,8 @@
 package org.comppress.customnewsapi.service.twitter;
 
+import io.github.redouane59.twitter.TwitterClient;
+import io.github.redouane59.twitter.dto.tweet.Tweet;
+import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.TwitterArticleDto;
 import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.TwitterTweet;
@@ -10,8 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import twitter4j.*;
-import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.User;
 
 import java.util.Optional;
 
@@ -21,6 +26,8 @@ public class TwitterServiceImpl implements TwitterService {
     private final TwitterRepository twitterRepository;
     private final TwitterMapper twitterMapper;
     private final ArticleRepository articleRepository;
+    private final Twitter twitter;
+    private final TwitterClient twitterClient;
 
     static String API_KEY = "3OcPF9Kg5bsCR1eYtMz4hixM1";
     static String API_SECRET = "Q2LZCxGna2ckmMNtJW0f3eKhBRmtkMRhPOv50mVSBsGZKZGBb7";
@@ -28,10 +35,12 @@ public class TwitterServiceImpl implements TwitterService {
     static String ACCESS_TOKEN_SECRET = "cwsR23PMMqa5XS3mzlU0G2oTtGzqIDps4V6tsjBn3kbpO";
 
     @Autowired
-    public TwitterServiceImpl(TwitterRepository twitterRepository, TwitterMapper twitterMapper, ArticleRepository articleRepository) {
+    public TwitterServiceImpl(TwitterRepository twitterRepository, TwitterMapper twitterMapper, ArticleRepository articleRepository, Twitter twitter, TwitterClient twitterClient) {
         this.twitterRepository = twitterRepository;
         this.twitterMapper = twitterMapper;
         this.articleRepository = articleRepository;
+        this.twitter = twitter;
+        this.twitterClient = twitterClient;
     }
 
     @Override
@@ -48,16 +57,8 @@ public class TwitterServiceImpl implements TwitterService {
             // https://vasisouv.github.io/twitter-api-tutorial/tutorial.html
             // Create Article against Twitter API
 
-            ConfigurationBuilder cb = new ConfigurationBuilder();
-            cb.setDebugEnabled(true)
-                    .setOAuthConsumerKey(API_KEY)
-                    .setOAuthConsumerSecret(API_SECRET)
-                    .setOAuthAccessToken(ACCESS_TOKEN)
-                    .setOAuthAccessTokenSecret(ACCESS_TOKEN_SECRET);
-
+            Twitter twitterApi = twitter;
             Optional<Article> article = articleRepository.findById(id);
-
-            Twitter twitterApi = new TwitterFactory(cb.build()).getInstance();
             Status status = null;
             try {
                 status = twitterApi.updateStatus("Hello Test URL " + article.get().getUrl());
@@ -75,11 +76,36 @@ public class TwitterServiceImpl implements TwitterService {
             System.out.println(URL);
             twitterTweet = new TwitterTweet().builder()
                     .articleId(id)
+                    .twitterId(status.getId())
                     .twitterArticleUrl(URL)
                     .build();
             twitterRepository.save(twitterTweet);
             TwitterArticleDto twitterArticleDto = twitterMapper.twitterArticleToTwitterArticleDto(twitterTweet);
             return ResponseEntity.status(HttpStatus.OK).body(twitterArticleDto);
+        }
+    }
+
+    @Override
+    public void getTweetDetails() {
+        twitterRepository.findAll().forEach(t -> {
+            if(t.getTwitterId() != null){
+                // Get List of Tweets?
+                Tweet tweet  = twitterClient.getTweet(String.valueOf(t.getTwitterId()));
+                if(t.getReplyCount() != tweet.getReplyCount()){
+                    t.setReplyCount(tweet.getReplyCount());
+                    twitterRepository.save(t);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void setReplyCount(CustomRatedArticleDto articleDto) {
+        TwitterTweet tweet = twitterRepository.findByArticleId(articleDto.getArticle_id());
+        if(tweet == null){
+            articleDto.setCount_comment(0);
+        }else{
+            articleDto.setCount_comment(tweet.getReplyCount());
         }
     }
 }

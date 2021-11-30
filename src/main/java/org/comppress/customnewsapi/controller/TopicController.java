@@ -24,12 +24,12 @@ public class TopicController {
     public ResponseEntity<GenericPage> getTopic(
             @RequestParam(value = "page") int page,
             @RequestParam(value = "size") int size,
-            @RequestParam(value = "topic") String topic,
+            @RequestParam(value = "topicId") Long topicId,
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ){
-        return topicService.getTopic(page,size,topic,lang,fromDate,toDate);
+        return topicService.getTopic(page,size,topicId,lang,fromDate,toDate);
     }
 
 }

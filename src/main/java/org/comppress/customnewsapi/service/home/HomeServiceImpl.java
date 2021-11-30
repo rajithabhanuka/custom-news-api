@@ -4,16 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.CustomCategoryDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
-import org.comppress.customnewsapi.dto.UserPreferenceDto;
 import org.comppress.customnewsapi.entity.Category;
 import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.UserEntity;
-import org.comppress.customnewsapi.repository.ArticleRepository;
-import org.comppress.customnewsapi.repository.CategoryRepository;
-import org.comppress.customnewsapi.repository.PublisherRepository;
-import org.comppress.customnewsapi.repository.UserRepository;
+import org.comppress.customnewsapi.repository.*;
 import org.comppress.customnewsapi.service.BaseSpecification;
+import org.comppress.customnewsapi.service.topic.TopicServiceImpl;
+import org.comppress.customnewsapi.service.twitter.TwitterService;
 import org.comppress.customnewsapi.utils.DateUtils;
+import org.comppress.customnewsapi.utils.PageHolderUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,13 +35,17 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final PublisherRepository publisherRepository;
+    private final TopicRepository topicRepository;
+    private final TwitterService twitterService;
 
     @Autowired
-    public HomeServiceImpl(ArticleRepository articleRepository, CategoryRepository categoryRepository, UserRepository userRepository, PublisherRepository publisherRepository) {
+    public HomeServiceImpl(ArticleRepository articleRepository, CategoryRepository categoryRepository, UserRepository userRepository, PublisherRepository publisherRepository, TopicRepository topicRepository, TwitterService twitterService) {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.publisherRepository = publisherRepository;
+        this.topicRepository = topicRepository;
+        this.twitterService = twitterService;
     }
 
     public List<Long> getPublisher(List<Long> publisherIds, String lang){
@@ -77,18 +80,15 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<UserPreferenceDto> getUserPreference(String lang, List<Long> categoryIds,
+    public ResponseEntity<GenericPage> getUserPreference(int page,int size,String lang, List<Long> categoryIds,
                                                                List<Long> publisherIds, String fromDate, String toDate) {
 
         final List<Long> finalPubIds = getPublisher(publisherIds, lang);
         categoryIds = getCategory(categoryIds,lang);
-        // Get User via Security Context
 
         List<CustomCategoryDto> customCategoryDtos = categoryRepository.findByCategoryIds(categoryIds).stream().map(s -> setArticles(s, lang,
                 finalPubIds, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate))).collect(Collectors.toList());
-        UserPreferenceDto userPreferenceDto = new UserPreferenceDto();
-        userPreferenceDto.setCategoryDtoList(customCategoryDtos);
-        return ResponseEntity.ok().body(userPreferenceDto);
+        return PageHolderUtils.getResponseEntityGenericPage(page,size,customCategoryDtos);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     private CustomCategoryDto setArticles(Category category, String lang,
                                           List<Long> publisherIds, LocalDateTime fromDate, LocalDateTime toDate) {
         // TODO Limit 1, Publishers included, Rated
-        if (publisherIds == null || publisherIds.isEmpty()) {
+         if (publisherIds == null || publisherIds.isEmpty()) {
             publisherIds = publisherRepository.findByLang(lang).stream().map(publisher -> publisher.getId()).collect(Collectors.toList());
         }
         Long categoryId = category.getId();
@@ -118,7 +118,8 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         CustomCategoryDto customCategoryDto = new CustomCategoryDto();
         if(article != null){
             CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
-            BeanUtils.copyProperties(article,customRatedArticleDto);
+            TopicServiceImpl.getTopicsFromArticle(article, topicRepository, customRatedArticleDto);
+            twitterService.setReplyCount(customRatedArticleDto);
             customCategoryDto.setArticle(customRatedArticleDto);
         }else {
             customCategoryDto.setArticle(null);
