@@ -61,7 +61,6 @@ public class ArticleController {
             @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ) {
-        // Check here for User Preferences and then pass
         return articleService.getRatedArticles(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
     }
 }
