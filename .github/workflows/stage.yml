@@ -38,6 +38,8 @@ jobs:
           echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> group_vars/all
           echo "mail_password: ${{ secrets.STAGE_MAIL_PASSWORD }}" >> group_vars/all
           cat group_vars/all
+      - name: ignore host key checking
+        run: export ANSIBLE_HOST_KEY_CHECKING=False
       - name: run ansible script
         run: ansible-playbook -i hosts.ini deploy_stage.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }}"
         working-directory: ./ansible
