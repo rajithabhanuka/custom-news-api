@@ -1,4 +1,4 @@
-- hosts: app
+- hosts: prod
   become: yes
   vars:
     image_name: ghcr.io/lukonjun/custom-news-api:1400535998
