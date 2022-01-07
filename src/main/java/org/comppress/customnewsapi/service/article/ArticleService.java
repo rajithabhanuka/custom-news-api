@@ -28,4 +28,6 @@ public interface ArticleService extends GenerateGenericPageUtils {
     ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(int page, int size, Long categoryId,
                                                                 List<Long> listPublisherIds, String lang,
                                                                 String fromDate, String toDate);
+
+    ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate);
 }

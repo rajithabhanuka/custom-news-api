@@ -63,4 +63,16 @@ public class ArticleController {
     ) {
         return articleService.getRatedArticles(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
     }
+
+    @GetMapping("/rated/user")
+    public ResponseEntity<GenericPage> getRatedArticlesFromUser(
+            @RequestParam(value = "page") int page,
+            @RequestParam(value = "size") int size,
+            @RequestParam(value = "fromDate", required = false) String fromDate,
+            @RequestParam(value = "toDate", required = false) String toDate
+    ) {
+        return articleService.getRatedArticlesFromUser(page, size, fromDate, toDate);
+    }
+
+
 }

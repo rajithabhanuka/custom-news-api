@@ -25,6 +25,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
@@ -49,14 +51,16 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     private final RssFeedRepository rssFeedRepository;
     private final ArticleRepository articleRepository;
     private final PublisherRepository publisherRepository;
+    private final UserRepository userRepository;
     private final TopicRepository topicRepository;
     private final ArticleTopicRepository articleTopicRepository;
 
     @Autowired
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository, TopicRepository topicRepository, ArticleTopicRepository articleTopicRepository) {
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository, UserRepository userRepository, TopicRepository topicRepository, ArticleTopicRepository articleTopicRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.articleRepository = articleRepository;
         this.publisherRepository = publisherRepository;
+        this.userRepository = userRepository;
         this.topicRepository = topicRepository;
         this.articleTopicRepository = articleTopicRepository;
     }
@@ -286,5 +290,16 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
 
+    }
+
+    @Override
+    public ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        userEntity.getUsername();
+        // Todo add Date
+        List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());
+        List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
     }
 }

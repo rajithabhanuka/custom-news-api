@@ -83,6 +83,9 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     public ResponseEntity<GenericPage> getUserPreference(int page,int size,String lang, List<Long> categoryIds,
                                                                List<Long> publisherIds, String fromDate, String toDate) {
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+
         final List<Long> finalPubIds = getPublisher(publisherIds, lang);
         categoryIds = getCategory(categoryIds,lang);
 
