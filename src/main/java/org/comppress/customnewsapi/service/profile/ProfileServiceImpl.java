@@ -110,6 +110,19 @@ public class ProfileServiceImpl implements ProfileService {
         return ResponseEntity.ok().body(userDto);
     }
 
+    @Override
+    public ResponseEntity<UserDto> resetPreferences() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        if(userEntity == null){ return ResponseEntity.status(401).body(null);}
+        userEntity.setListCategoryIds(null);
+        userEntity.setListPublisherIds(null);
+        userRepository.save(userEntity);
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity, userDto);
+        return ResponseEntity.ok().body(userDto);
+    }
+
     private String encryptPassword(String password) {
 
         return bcryptEncoder.encode(password);

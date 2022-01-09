@@ -5,12 +5,10 @@ import org.comppress.customnewsapi.dto.ErrorResponseDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @ControllerAdvice
@@ -52,6 +50,23 @@ public class GlobalErrorHandler extends ResponseEntityExceptionHandler {
                 .build());
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationException(AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .variable(ex.getVariable())
+                .errorCode(ErrorCodes.CNA_005)
+                .build());
+    }
+
+    @ExceptionHandler(PublisherDoesNotExistException.class)
+    public ResponseEntity<ErrorResponseDto> handlePublisherDoesNotExistException(PublisherDoesNotExistException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .variable(ex.getVariable())
+                .errorCode(ErrorCodes.CNA_006)
+                .build());
+    }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {

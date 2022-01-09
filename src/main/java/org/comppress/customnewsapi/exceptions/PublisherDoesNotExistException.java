@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class AuthenticationException extends RuntimeException{
+public class PublisherDoesNotExistException extends RuntimeException{
     private String message;
     private String variable;
 }

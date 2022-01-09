@@ -4,7 +4,6 @@ import org.comppress.customnewsapi.dto.ForgetPasswordDto;
 import org.comppress.customnewsapi.dto.PreferenceDto;
 import org.comppress.customnewsapi.dto.UpdatePasswordDto;
 import org.comppress.customnewsapi.dto.UserDto;
-import org.comppress.customnewsapi.dto.response.ForgetPasswordResponseDto;
 import org.comppress.customnewsapi.dto.response.ResponseDto;
 import org.comppress.customnewsapi.exceptions.EmailAlreadyExistsException;
 import org.comppress.customnewsapi.exceptions.EmailSenderException;
@@ -42,4 +41,10 @@ public class ProfileController {
         return profileService.updateCategoryAndPublisherPreference(preferenceDto);
     }
 
+    @PostMapping(value = "/preferences/reset")
+    public ResponseEntity<UserDto> resetPreferences(){
+        return profileService.resetPreferences();
+    }
+
 }
+

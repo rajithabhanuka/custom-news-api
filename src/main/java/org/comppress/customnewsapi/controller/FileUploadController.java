@@ -3,6 +3,7 @@ package org.comppress.customnewsapi.controller;
 import org.comppress.customnewsapi.dto.CategoryDto;
 import org.comppress.customnewsapi.dto.CriteriaDto;
 import org.comppress.customnewsapi.dto.PublisherDto;
+import org.comppress.customnewsapi.dto.TopNewsFeedDto;
 import org.comppress.customnewsapi.entity.RssFeed;
 import org.comppress.customnewsapi.service.fileupload.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,4 +47,10 @@ public class FileUploadController {
     public ResponseEntity<List<CriteriaDto>> saveCriteria(@RequestParam("file") MultipartFile file){
         return fileUploadService.saveCriteria(file);
     }
+
+    @PostMapping(value ="/top-news", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<TopNewsFeedDto>> saveTopNews(@RequestParam("file") MultipartFile file){
+        return fileUploadService.saveTopNews(file);
+    }
+
 }

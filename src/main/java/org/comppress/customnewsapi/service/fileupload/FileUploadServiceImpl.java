@@ -7,15 +7,11 @@ import org.apache.commons.csv.CSVRecord;
 import org.comppress.customnewsapi.dto.CategoryDto;
 import org.comppress.customnewsapi.dto.CriteriaDto;
 import org.comppress.customnewsapi.dto.PublisherDto;
-import org.comppress.customnewsapi.entity.Category;
-import org.comppress.customnewsapi.entity.Criteria;
-import org.comppress.customnewsapi.entity.Publisher;
-import org.comppress.customnewsapi.entity.RssFeed;
+import org.comppress.customnewsapi.dto.TopNewsFeedDto;
+import org.comppress.customnewsapi.entity.*;
 import org.comppress.customnewsapi.exceptions.FileImportException;
-import org.comppress.customnewsapi.repository.CategoryRepository;
-import org.comppress.customnewsapi.repository.CriteriaRepository;
-import org.comppress.customnewsapi.repository.PublisherRepository;
-import org.comppress.customnewsapi.repository.RssFeedRepository;
+import org.comppress.customnewsapi.exceptions.PublisherDoesNotExistException;
+import org.comppress.customnewsapi.repository.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +29,10 @@ import java.util.List;
 @Slf4j
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
+
+    private final int TOP_NEWS_PUBLISHER = 0;
+    private final int TOP_NEWS_LINK = 1;
+    private final int TOP_NEWS_LANG = 2;
 
     private final int RSS_FEED_SOURCE = 0;
     private final int RSS_FEED_CATEGORY = 1;
@@ -52,13 +52,15 @@ public class FileUploadServiceImpl implements FileUploadService {
     private final PublisherRepository publisherRepository;
     private final CategoryRepository categoryRepository;
     private final CriteriaRepository criteriaRepository;
+    private final TopNewsFeedRepository topNewsFeedRepository;
 
     @Autowired
-    public FileUploadServiceImpl(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository, CriteriaRepository criteriaRepository) {
+    public FileUploadServiceImpl(RssFeedRepository rssFeedRepository, PublisherRepository publisherRepository, CategoryRepository categoryRepository, CriteriaRepository criteriaRepository, TopNewsFeedRepository topNewsFeedRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.publisherRepository = publisherRepository;
         this.categoryRepository = categoryRepository;
         this.criteriaRepository = criteriaRepository;
+        this.topNewsFeedRepository = topNewsFeedRepository;
     }
 
     @Transactional
@@ -174,5 +176,31 @@ public class FileUploadServiceImpl implements FileUploadService {
             }
         }
         return ResponseEntity.ok().body(publisherDtoList);
+    }
+
+    @Override
+    public ResponseEntity<List<TopNewsFeedDto>> saveTopNews(MultipartFile file) {
+        log.info("LINKS IMPORT CSV IS PROCESSING {}", file.getName());
+
+        List<CSVRecord> csvRecordList = getRecords(file);
+        List<TopNewsFeedDto> topNewsFeedDtos = new ArrayList<>();
+        for(CSVRecord csvRecord:csvRecordList){
+            if(!topNewsFeedRepository.existsByUrl(csvRecord.get(TOP_NEWS_LINK))){
+                TopNewsFeed topNewsFeed = new TopNewsFeed();
+                topNewsFeed.setLang(csvRecord.get(TOP_NEWS_LANG));
+                topNewsFeed.setUrl(csvRecord.get(TOP_NEWS_LINK));
+                Publisher publisher = publisherRepository.findByName(csvRecord.get(TOP_NEWS_PUBLISHER));
+                if(publisher != null){
+                    topNewsFeed.setPublisherId(publisher.getId());
+                }else{
+                    throw new PublisherDoesNotExistException("Publisher does not exist", csvRecord.get(TOP_NEWS_PUBLISHER));
+                }
+                topNewsFeedRepository.save(topNewsFeed);
+                TopNewsFeedDto topNewsFeedDto = new TopNewsFeedDto();
+                BeanUtils.copyProperties(topNewsFeed,topNewsFeedDto);
+                topNewsFeedDtos.add(topNewsFeedDto);
+            }
+        }
+        return ResponseEntity.ok().body(topNewsFeedDtos);
     }
 }

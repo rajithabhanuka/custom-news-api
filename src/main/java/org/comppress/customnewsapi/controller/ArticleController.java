@@ -50,7 +50,6 @@ public class ArticleController {
         return articleService.getArticlesNotRated(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
     }
 
-
     @GetMapping("/rated")
     public ResponseEntity<GenericPage> getRatedArticles(
             @RequestParam(value = "page") int page,
@@ -59,8 +58,22 @@ public class ArticleController {
             @RequestParam(value = "listPublisherIds", required = false) List<Long> listPublisherIds,
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
+            @RequestParam(value = "toDate", required = false) String toDate,
+            @RequestParam(value = "noPaywall", required = false, defaultValue = "false") Boolean noPaywall,
+            @RequestParam(value = "topFeed", required = false, defaultValue = "false") Boolean topFeed
+    ) {
+        return articleService.getRatedArticles(page, size, categoryId, listPublisherIds, lang, fromDate, toDate, topFeed, noPaywall);
+    }
+
+    @GetMapping("/rated/user")
+    public ResponseEntity<GenericPage> getRatedArticlesFromUser(
+            @RequestParam(value = "page") int page,
+            @RequestParam(value = "size") int size,
+            @RequestParam(value = "fromDate", required = false) String fromDate,
             @RequestParam(value = "toDate", required = false) String toDate
     ) {
-        return articleService.getRatedArticles(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
+        return articleService.getRatedArticlesFromUser(page, size, fromDate, toDate);
     }
+
+
 }

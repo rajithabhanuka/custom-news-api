@@ -6,6 +6,7 @@ public interface ErrorCodes {
     String CNA_003 = "CNA_003";   // Article not found Exception
     String CNA_004 = "CNA_004";   // Duplicate Entry Exception
     String CNA_005 = "CNA_005";   // Unauthorized
+    String CNA_006 = "CNA_006";   // Publisher not found Exception
     String CNA_999 = "CNA_999";   // General Exception
 
 }

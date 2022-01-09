@@ -2,6 +2,7 @@ package org.comppress.customnewsapi.service.article;
 
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndFeedImpl;
 import com.rometools.rome.io.ParsingFeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
@@ -10,12 +11,14 @@ import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.entity.*;
-import org.comppress.customnewsapi.repository.*;
+import org.comppress.customnewsapi.repository.ArticleRepository;
+import org.comppress.customnewsapi.repository.PublisherRepository;
+import org.comppress.customnewsapi.repository.RssFeedRepository;
+import org.comppress.customnewsapi.repository.UserRepository;
 import org.comppress.customnewsapi.service.BaseSpecification;
 import org.comppress.customnewsapi.utils.CustomStringUtils;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
-import org.comppress.customnewsapi.utils.TopicHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,6 +28,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
@@ -37,9 +42,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,16 +52,41 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     private final RssFeedRepository rssFeedRepository;
     private final ArticleRepository articleRepository;
     private final PublisherRepository publisherRepository;
-    private final TopicRepository topicRepository;
-    private final ArticleTopicRepository articleTopicRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository, TopicRepository topicRepository, ArticleTopicRepository articleTopicRepository) {
+    public ArticleServiceImpl(RssFeedRepository rssFeedRepository, ArticleRepository articleRepository, PublisherRepository publisherRepository, UserRepository userRepository) {
         this.rssFeedRepository = rssFeedRepository;
         this.articleRepository = articleRepository;
         this.publisherRepository = publisherRepository;
-        this.topicRepository = topicRepository;
-        this.articleTopicRepository = articleTopicRepository;
+        this.userRepository = userRepository;
+    }
+
+    public List<Article> fetchArticlesFromTopNewsFeed(TopNewsFeed topNewsFeed){
+        List<Article> articles = new ArrayList<>();
+
+        SyndFeed feed = new SyndFeedImpl();
+        try {
+            URL feedSource = new URL(topNewsFeed.getUrl());
+            SyndFeedInput input = new SyndFeedInput();
+            feed = input.build(new XmlReader(feedSource));
+            log.info("Fetching News from " + topNewsFeed.getUrl());
+        } catch (ParsingFeedException e) {
+            log.error("Feed can not be parsed, please recheck the url " + topNewsFeed.getUrl());
+            return null;
+        } catch (FileNotFoundException e) {
+            log.error("FileNotFoundException most likely a dead link, check the url " + topNewsFeed.getUrl());
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        for (SyndEntry syndEntry : feed.getEntries()) {
+            Article article = customMappingSyndEntryImplToArticle(syndEntry, null);
+            articles.add(article);
+        }
+
+        return articles;
     }
 
     public void fetchArticlesFromRssFeeds() {
@@ -92,47 +120,10 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             if (articleRepository.findByGuid(article.getGuid()).isPresent()) continue;
             try {
                 articleRepository.save(article);
-                generateTopics(article);
             } catch (DataIntegrityViolationException e) {
                 log.error("Duplicate Record found while saving data {}", e.getLocalizedMessage());
             } catch (Exception e) {
                 log.error("Error while saving data {}", e.getLocalizedMessage());
-            }
-        }
-    }
-
-    private void generateTopics(Article article) {
-        List<String> randomTopics = Arrays.asList(TopicHelper.RANDOM_WORDS.split(","));
-        Random random = new Random();
-        int numberTopics = 2;
-        for (int i = 0; i < numberTopics; i++) {
-            String topicName = randomTopics.get(random.nextInt(randomTopics.size()));
-            Topic topic = topicRepository.findByName(topicName);
-            if (topic != null) {
-                try {
-                    if(articleTopicRepository.findByArticleIdAndTopicId(article.getId(),topic.getId()).size() < numberTopics) {
-                        ArticleTopic articleTopic = new ArticleTopic();
-                        articleTopic.setArticleId(article.getId());
-                        articleTopic.setTopicId(topic.getId());
-                        articleTopicRepository.save(articleTopic);
-                    }
-                } catch (Exception ex) {
-                    log.error("Duplicate Exception");
-                }
-            } else {
-                try {
-                    topic = new Topic();
-                    topic.setName(topicName);
-                    topic = topicRepository.save(topic);
-                    if(articleTopicRepository.findByArticleIdAndTopicId(article.getId(),topic.getId()).size() < numberTopics) {
-                        ArticleTopic articleTopic = new ArticleTopic();
-                        articleTopic.setArticleId(article.getId());
-                        articleTopic.setTopicId(topic.getId());
-                        articleTopicRepository.save(articleTopic);
-                    }
-                } catch (Exception ex) {
-                    log.error("Duplicate Exception");
-                }
             }
         }
     }
@@ -209,7 +200,11 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             article.setDescription(formatText(syndEntry.getDescription().getValue()));
         }
 
-        article.setRssFeedId(rssFeed.getId());
+        if(rssFeed != null){
+            article.setRssFeedId(rssFeed.getId());
+        }else {
+            article.setRssFeedId(-1L);
+        }
         return article;
     }
 
@@ -251,13 +246,13 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     @Override
     public ResponseEntity<GenericPage> getRatedArticles(int page, int size, Long categoryId,
                                                         List<Long> listPublisherIds, String lang,
-                                                        String fromDate, String toDate) {
+                                                        String fromDate, String toDate, Boolean topFeed, Boolean noPaywall) {
         if (listPublisherIds == null) {
             listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
         List<ArticleRepository.CustomRatedArticle> customRatedArticleList = articleRepository.retrieveAllRatedArticlesInDescOrder(
                 categoryId, listPublisherIds, lang,
-                DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate));
+                DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), topFeed, noPaywall);
         /* // TODO WHY CAN WE NOT USE THE COUNT QUERY HERE; SQL ERROR
         Page<ArticleRepository.CustomRatedArticle> customRatedArticlePage = articleRepository.retrieveAllRatedArticlesInDescOrder(
                 title, category, publisherNewsPaper, lang,
@@ -286,5 +281,16 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
 
+    }
+
+    @Override
+    public ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        userEntity.getUsername();
+        // Todo add Date
+        List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());
+        List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
     }
 }

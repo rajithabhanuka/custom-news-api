@@ -10,6 +10,7 @@ import org.comppress.customnewsapi.entity.Article;
 import org.comppress.customnewsapi.entity.Criteria;
 import org.comppress.customnewsapi.entity.Rating;
 import org.comppress.customnewsapi.entity.UserEntity;
+import org.comppress.customnewsapi.exceptions.AuthenticationException;
 import org.comppress.customnewsapi.exceptions.CriteriaDoesNotExistException;
 import org.comppress.customnewsapi.repository.*;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,9 @@ public class RatingServiceImpl implements RatingService {
         if (guid == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             userEntity = userRepository.findByUsername(authentication.getName());
+            if(userEntity == null) throw new AuthenticationException("You are not authorized, please login","");
         }
+
         List<Rating> ratings = new ArrayList<>();
         boolean isUpdateRating = false;
         if (userEntity == null && guid != null) {

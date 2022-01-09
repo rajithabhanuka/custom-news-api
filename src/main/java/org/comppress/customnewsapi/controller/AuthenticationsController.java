@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 public class AuthenticationsController {
 
@@ -36,7 +38,7 @@ public class AuthenticationsController {
     }
 
     @PostMapping(value = "/register")
-    public ResponseEntity<UserDto> saveUser(@RequestBody UserDto userDto){
+    public ResponseEntity<UserDto> saveUser(@RequestBody @Valid UserDto userDto){
         return userService.saveUser(userDto);
     }
 
@@ -49,7 +51,7 @@ public class AuthenticationsController {
 
         final String token = jwtTokenUtil.generateToken(userDetails);
 
-        return ResponseEntity.ok(new AuthResponseDto(token));
+        return ResponseEntity.ok(new AuthResponseDto(token, userDetails.getUsername()));
     }
 
     private void authenticate(String username, String password) throws Exception {
