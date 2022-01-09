@@ -5,8 +5,6 @@ on:
     branches: [main]
     paths:
     - src/**
-    - docker-compose.yml.j2
-    - Dockerfile
 
 jobs:
   compile-test-build-push-deploy-to-infrastructure:
@@ -24,22 +22,4 @@ jobs:
     - name: Login to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
-      run: docker push ghcr.io/lukonjun/custom-news-api:production-${{ github.run_id }}
-    - name: create file with ssh key
-      run: |
-        mkdir ~/.ssh
-        touch ~/.ssh/id_rsa
-        echo '${{ secrets.STAGE_PRIVATE_KEY }}' >> ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-    - name: add Variables to all.yml
-      working-directory: ./ansible
-      run: |
-        echo "image: ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}" >> group_vars/all
-        echo "password: ${{ secrets.STAGE_DB_PASSWORD }}" >> group_vars/all
-        echo "mail_password: ${{ secrets.STAGE_MAIL_PASSWORD }}" >> group_vars/all
-        cat group_vars/all
-    - name: ignore host key checking
-      run: export ANSIBLE_HOST_KEY_CHECKING=False
-    - name: run ansible script
-      run: ansible-playbook -i hosts.ini deploy_prod.yml --extra-vars "token=${{ secrets.GITHUB_TOKEN }}"
-      working-directory: ./ansible
+      run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
