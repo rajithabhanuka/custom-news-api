@@ -18,7 +18,7 @@ jobs:
     - name: Build jar with Maven
       run: mvn clean install -Dmaven.test.skip=true
     - name: Build Container Image
-      run: docker build --tag ghcr.io/lukonjun/custom-news-api:production-${{ github.run_id }} .
+      run: docker build --tag ghcr.io/lukonjun/custom-news-api:${{ github.run_id }} .
     - name: Login to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
