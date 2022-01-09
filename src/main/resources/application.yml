@@ -30,6 +30,10 @@ server:
   servlet:
     context-path: /custom-news-api
 scheduler:
+  top-news-feeds:
+    triggeringIntervalMilliSeconds: 30000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
   news-feed:
     triggeringIntervalMilliSeconds: 40000
     initialDelayIntervalMilliSeconds: 5000

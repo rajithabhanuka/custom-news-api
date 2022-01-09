@@ -9,7 +9,6 @@ import org.comppress.customnewsapi.entity.Publisher;
 import org.comppress.customnewsapi.entity.UserEntity;
 import org.comppress.customnewsapi.repository.*;
 import org.comppress.customnewsapi.service.BaseSpecification;
-import org.comppress.customnewsapi.service.topic.TopicServiceImpl;
 import org.comppress.customnewsapi.service.twitter.TwitterService;
 import org.comppress.customnewsapi.utils.DateUtils;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
@@ -35,16 +34,14 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final PublisherRepository publisherRepository;
-    private final TopicRepository topicRepository;
     private final TwitterService twitterService;
 
     @Autowired
-    public HomeServiceImpl(ArticleRepository articleRepository, CategoryRepository categoryRepository, UserRepository userRepository, PublisherRepository publisherRepository, TopicRepository topicRepository, TwitterService twitterService) {
+    public HomeServiceImpl(ArticleRepository articleRepository, CategoryRepository categoryRepository, UserRepository userRepository, PublisherRepository publisherRepository, TwitterService twitterService) {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.publisherRepository = publisherRepository;
-        this.topicRepository = topicRepository;
         this.twitterService = twitterService;
     }
 
@@ -81,21 +78,18 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
 
     @Override
     public ResponseEntity<GenericPage> getUserPreference(int page,int size,String lang, List<Long> categoryIds,
-                                                               List<Long> publisherIds, String fromDate, String toDate) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+                                                               List<Long> publisherIds, String fromDate, String toDate, Boolean noPaywall) {
 
         final List<Long> finalPubIds = getPublisher(publisherIds, lang);
         categoryIds = getCategory(categoryIds,lang);
 
         List<CustomCategoryDto> customCategoryDtos = categoryRepository.findByCategoryIds(categoryIds).stream().map(s -> setArticles(s, lang,
-                finalPubIds, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate))).collect(Collectors.toList());
+                finalPubIds, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), noPaywall)).collect(Collectors.toList());
         return PageHolderUtils.getResponseEntityGenericPage(page,size,customCategoryDtos);
     }
 
     @Override
-    public ResponseEntity<GenericPage<CustomRatedArticleDto>> getArticleForCategory(int page, int size, List<Long> categoryIds, List<Long> publisherIds, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<CustomRatedArticleDto>> getArticleForCategory(int page, int size, List<Long> categoryIds, List<Long> publisherIds, String lang, String fromDate, String toDate, Boolean noPaywall) {
         // TODO Interceptor Checking for Either JWT or GUID
         if (categoryIds == null || categoryIds.isEmpty()) {
             categoryIds = categoryRepository.findByLang(lang, PageRequest.of(page, size)).stream().map(category -> category.getId()).collect(Collectors.toList());
@@ -105,24 +99,24 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
         }
 
         Page<ArticleRepository.CustomRatedArticle> articlesPage = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguage(
-                categoryIds, publisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size)
+                categoryIds, publisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), noPaywall, PageRequest.of(page, size)
         );
         return ResponseEntity.ok().body(getCustomRatedArticleDtoGenericPage(articlesPage));
     }
 
     private CustomCategoryDto setArticles(Category category, String lang,
-                                          List<Long> publisherIds, LocalDateTime fromDate, LocalDateTime toDate) {
+                                          List<Long> publisherIds, LocalDateTime fromDate, LocalDateTime toDate, Boolean noPaywall) {
         // TODO Limit 1, Publishers included, Rated
-         if (publisherIds == null || publisherIds.isEmpty()) {
+        if (publisherIds == null || publisherIds.isEmpty()) {
             publisherIds = publisherRepository.findByLang(lang).stream().map(publisher -> publisher.getId()).collect(Collectors.toList());
         }
         Long categoryId = category.getId();
-        ArticleRepository.CustomRatedArticle article = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguageAndLimit(categoryId,publisherIds,lang,fromDate,toDate);
+        ArticleRepository.CustomRatedArticle article = articleRepository.retrieveArticlesByCategoryIdsAndPublisherIdsAndLanguageAndLimit(categoryId,publisherIds,lang,fromDate,toDate,noPaywall);
         CustomCategoryDto customCategoryDto = new CustomCategoryDto();
         if(article != null){
             CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
-            TopicServiceImpl.getTopicsFromArticle(article, topicRepository, customRatedArticleDto);
             twitterService.setReplyCount(customRatedArticleDto);
+            BeanUtils.copyProperties(article, customRatedArticleDto);
             customCategoryDto.setArticle(customRatedArticleDto);
         }else {
             customCategoryDto.setArticle(null);

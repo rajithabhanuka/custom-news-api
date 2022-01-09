@@ -3,6 +3,7 @@ package org.comppress.customnewsapi.service.article;
 import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.entity.Article;
+import org.comppress.customnewsapi.entity.TopNewsFeed;
 import org.comppress.customnewsapi.utils.GenerateGenericPageUtils;
 import org.springframework.http.ResponseEntity;
 
@@ -18,12 +19,13 @@ public interface ArticleService extends GenerateGenericPageUtils {
                                                         String fromDate, String toDate);
 
     void fetchArticlesFromRssFeeds();
+    List<Article> fetchArticlesFromTopNewsFeed(TopNewsFeed topNewsFeed);
 
     void update(Article article) throws URISyntaxException, IOException;
 
     ResponseEntity<GenericPage> getRatedArticles(int page, int size, Long categoryId,
                                                  List<Long> listPublisherIds, String lang,
-                                                 String fromDate, String toDate);
+                                                 String fromDate, String toDate, Boolean topFeed, Boolean noPaywall);
 
     ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(int page, int size, Long categoryId,
                                                                 List<Long> listPublisherIds, String lang,

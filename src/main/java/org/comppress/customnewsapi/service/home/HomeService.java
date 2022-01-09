@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface HomeService extends GenerateGenericPageUtils {
     ResponseEntity<GenericPage> getUserPreference(int page, int size,String lang, List<Long> categoryId,
-                                                                     List<Long> publisherIds, String fromDate, String toDate);
+                                                                     List<Long> publisherIds, String fromDate, String toDate, Boolean noPaywall);
 
     ResponseEntity<GenericPage<CustomRatedArticleDto>> getArticleForCategory(int page, int size,
                                                                              List<Long> categoryIds, List<Long> publisherIds,
-                                                                             String lang, String fromDate, String toDate);
+                                                                             String lang, String fromDate, String toDate, Boolean noPaywall);
 }

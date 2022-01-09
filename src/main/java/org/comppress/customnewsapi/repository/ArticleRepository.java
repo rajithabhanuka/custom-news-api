@@ -13,6 +13,8 @@ import java.util.Optional;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {
 
+    Optional<Article> findByUrlAndIsTopNewsFalse(String url);
+
     Page<Article> findByIsAccessibleUpdatedFalse(Pageable pageable);
 
     @Query(value = "SELECT * FROM article ORDER BY RAND() LIMIT :numberArticles ", nativeQuery = true)
@@ -82,9 +84,10 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("title") String title,
             @Param("language") String language,
             @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate, Pageable pageable);
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
 
-    @Query(value = "select t.article_id, a.author, a.title, a.description, a.url, a.url_to_image, a.guid, a.published_at, a.content, a.count_ratings, a.is_accessible,  t.average_rating_criteria_1, t.average_rating_criteria_2, t.average_rating_criteria_3, sum(t.average_rating_criteria_1 + t.average_rating_criteria_2 + t.average_rating_criteria_3)/" +
+    @Query(value = "select t.article_id, a.author, a.title, a.description, a.url, a.url_to_image, a.guid, a.published_at, a.content, a.count_ratings, a.is_accessible,  a.is_top_news, p.id as publisher_id, p.name as publisher_name,t.average_rating_criteria_1, t.average_rating_criteria_2, t.average_rating_criteria_3, sum(t.average_rating_criteria_1 + t.average_rating_criteria_2 + t.average_rating_criteria_3)/" +
             "(CASE WHEN  t.average_rating_criteria_1 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_2 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_3 IS NULL THEN 0 ELSE 1 END) AS total_average_rating " +
             "from (SELECT distinct r.article_id, " +
             "(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=1) as average_rating_criteria_1, " +
@@ -94,6 +97,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             " WHERE rf.category_id = :categoryId AND " +
             "rf.publisher_id in (:publisherIds) AND " +
             "(:language is null or :language = '' or rf.lang LIKE :language) AND " +
+            "(:topFeed =  0 or :topFeed = a.is_top_news) AND " +
+            "(:isAccessible =  0 or :isAccessible = a.is_accessible) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC;"
             ,nativeQuery = true)
@@ -102,7 +107,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("publisherIds") List<Long> publisherIds,
             @Param("language") String language,
             @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate);
+            @Param("toDate") LocalDateTime toDate,
+            @Param("topFeed") Boolean topFeed,
+            @Param("isAccessible") Boolean isAccessible);
 
     @Query(value = "select t.article_id, a.author, a.title, a.description, a.url, a.url_to_image, a.guid, a.published_at, a.content, a.count_ratings, a.is_accessible,  t.average_rating_criteria_1, t.average_rating_criteria_2, t.average_rating_criteria_3, sum(t.average_rating_criteria_1 + t.average_rating_criteria_2 + t.average_rating_criteria_3)/" +
             "(CASE WHEN  t.average_rating_criteria_1 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_2 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_3 IS NULL THEN 0 ELSE 1 END) AS total_average_rating " +
@@ -136,6 +143,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
         String getContent();
         Integer getCount_ratings();
         Boolean getIs_accessible();
+        Boolean getIs_top_news();
         Double getAverage_rating_criteria_1();
         Double getAverage_rating_criteria_2();
         Double getAverage_rating_criteria_3();
@@ -157,6 +165,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "WHERE ( rf.lang = :lang ) AND " +
             "c.id in :categoryIds  AND " +
             "p.id in :publisherIds AND " +
+            "(:isAccessible =  0 or :isAccessible = a.is_accessible) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC"
             , countQuery = "select count(*) " +
@@ -168,6 +177,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "WHERE ( rf.lang = :lang ) AND " +
             "c.id in :categoryIds  AND " +
             "p.id in :publisherIds AND " +
+            "(:isAccessible =  0 or :isAccessible = a.is_accessible) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id"
             , nativeQuery = true)
@@ -177,6 +187,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("lang") String lang,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
+            @Param("isAccessible") Boolean isAccessible,
             Pageable pageable);
 
 
@@ -194,6 +205,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "WHERE ( rf.lang = :lang ) AND " +
             "c.id = :categoryId AND " +
             "p.id in :publisherIds AND " +
+            "(:isAccessible =  0 or :isAccessible = a.is_accessible) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "group by t.article_id order by total_average_rating DESC LIMIT 1"
             , nativeQuery = true)
@@ -202,7 +214,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("publisherIds") List<Long> publisherIds,
             @Param("lang") String lang,
             @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate
+            @Param("toDate") LocalDateTime toDate,
+            @Param("isAccessible") Boolean isAccessible
     );
 
     @Query(value = "SELECT * FROM article WHERE (:articleId is null or id = :articleId)", nativeQuery = true)
