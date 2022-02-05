@@ -43,6 +43,7 @@ import java.net.http.HttpResponse;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -179,8 +180,8 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
                 imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "url=\"");
             }
             if (imgUrl == null || imgUrl.isEmpty()) {
-                // TODO Default Image
-                article.setUrlToImage("No Image Found");
+                Optional<Publisher> publisher = publisherRepository.findById(rssFeed.getPublisherId());
+                article.setUrlToImage(publisher.get().getUrlToImage());
             } else {
                 article.setUrlToImage(imgUrl);
             }
@@ -290,6 +291,9 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         userEntity.getUsername();
         // Todo add Date
         List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());
+
+        List<Long> articleIdList = articleList.stream().map(Article::getId).collect(Collectors.toList());
+
         List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
         return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
     }
