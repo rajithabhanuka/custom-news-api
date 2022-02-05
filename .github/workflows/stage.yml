@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
     - src/**
+    - helm/**
 
 jobs:
   compile-test-build-push-deploy-to-infrastructure:
