@@ -23,21 +23,10 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
       run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
-    - name: 'Deploy'
-      uses: 'deliverybot/helm@v1'
-      with:
-        release: 'nginx'
-        namespace: 'default'
-        chart: './helm/news-api'
-        token: '${{ github.token }}'
-        values: |
-          env.SPRING_DATASOURCE_PASSWORD: '${{ secrets.STAGE_DB_PASSWORD }}'
-          env.SPRING_DATASOURCE_URL: '${{ secrets.DB_CONNECTION_STRING }}'
-          env.SPRING_MAIL_PASSWORD: '${{ secrets.STAGE_MAIL_PASSWORD }}'
-          image.tag: ${{ github.run_id }}
-        value-files: >-
-        [
-            "./helm/production.yaml"
-        ]
+    - name: deploy postgres to cluster
+      uses: wahyd4/kubectl-helm-action@master
       env:
-        KUBECONFIG_FILE: '${{ secrets.KUBECONFIG }}'
+        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      with:
+        args: |
+          helm upgrade --install news-api ./helm/news-api --values stage.yml --set image.tag="${{ github.run_id }}"
