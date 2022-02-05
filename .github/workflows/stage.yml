@@ -32,5 +32,9 @@ jobs:
       run: kubectl get nodes
     - name: helm deploy
       run: |
-        helm upgrade --install news-api ./news-api --values stage.yml --set image.tag="${{ github.run_id }}"
+        helm upgrade --install news-api ./news-api --values stage.yml --set image.tag=${{ github.run_id }} --dry-run --debug
+      working-directory: ./helm
+    - name: helm deploy
+      run: |
+        helm upgrade --install news-api ./news-api --values stage.yml --set image.tag=${{ github.run_id }}
       working-directory: ./helm
