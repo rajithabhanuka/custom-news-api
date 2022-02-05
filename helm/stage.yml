@@ -11,10 +11,10 @@ image:
   tag: "1674988291"
 
 env:          
-  SPRING_DATASOURCE_PASSWORD: "UVaQa3RM94vCSprevHTQ6Y8k2hd7Q7"
-  SPRING_DATASOURCE_USERNAME: "lucas"
-  SPRING_DATASOURCE_URL: "jdbc:mysql://142.132.162.41:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true"
-  SPRING_MAIL_PASSWORD: "mafpwzchA4CEAgec3f3z"
+  SPRING_DATASOURCE_PASSWORD: "1234"
+  SPRING_DATASOURCE_USERNAME: "root"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://localhost:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true"
+  SPRING_MAIL_PASSWORD: "1234"
   SERVER_PORT: 8080
   scheduler.top-news-feeds.enabled: "yes"
   scheduler.news-feed.enabled: "yes"
