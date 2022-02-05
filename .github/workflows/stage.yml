@@ -23,10 +23,10 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Run docker push
       run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
-    - name: deploy postgres to cluster
-      uses: wahyd4/kubectl-helm-action@master
-      env:
-        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
-      with:
-        args: |
-          helm upgrade --install news-api ./helm/news-api --values stage.yml --set image.tag="${{ github.run_id }}"
+    - name: kubectl set up
+      run: echo ${{ secrets.KUBECONFIG }} > ~/.kube/config
+    - name: test
+      run: kubectl get nodes
+    - name: helm deploy
+      run: |
+        helm upgrade --install news-api ./helm/news-api --values stage.yml --set image.tag="${{ github.run_id }}"
