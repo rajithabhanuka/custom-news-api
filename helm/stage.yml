@@ -16,6 +16,10 @@ env:
   SPRING_DATASOURCE_URL: "jdbc:mysql://142.132.162.41:3306/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true"
   SPRING_MAIL_PASSWORD: "mafpwzchA4CEAgec3f3z"
   SERVER_PORT: 8080
+  scheduler.top-news-feeds.enabled: "yes"
+  scheduler.news-feed.enabled: "yes"
+  scheduler.paywall.enabled: "yes"
+  scheduler.twitter.enabled: "yes"
 
 imagePullSecrets: []
 nameOverride: ""
