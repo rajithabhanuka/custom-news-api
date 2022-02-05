@@ -24,7 +24,7 @@ jobs:
     - name: Run docker push
       run: docker push ghcr.io/lukonjun/custom-news-api:${{ github.run_id }}
     - name: kubectl set up
-      run: echo ${{ secrets.KUBECONFIG }} > ~/.kube/config
+      run: echo '${{ secrets.KUBECONFIG }}' > ~/.kube/config
     - name: test
       run: kubectl get nodes
     - name: helm deploy
