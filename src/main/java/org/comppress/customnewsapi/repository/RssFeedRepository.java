@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface RssFeedRepository extends JpaRepository<RssFeed,Long> {
 
-    Optional<RssFeed> findByUrlRssFeed(String url);
-
+    Optional<RssFeed> findByUrl(String url);
+    Boolean existsByUrl(String url);
 }

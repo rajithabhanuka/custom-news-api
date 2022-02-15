@@ -1,24 +1,25 @@
 package org.comppress.customnewsapi.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotNull;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder
 public class RssFeed extends AbstractEntity{
 
-    @ManyToOne
-    private Category category;
-    @Column(unique = true)
-    private String urlRssFeed;
-    @ManyToOne
-    private Publisher publisher;
+    @Column(unique = true, nullable = false)
+    private String url;
+    private Long publisherId;
+    private Long categoryId;
+    private String lang;
 
 }

@@ -1,0 +1,17 @@
+- hosts: prod
+  become: yes
+  vars:
+    image_name: ghcr.io/lukonjun/custom-news-api:1400535998
+    username: lukonjun
+    token: 1234
+  tasks:
+    - name: login to github registry
+      shell: "docker login -u {{ username }} -p {{ token }} ghcr.io"
+    - name: template docker compose file
+      template:
+        src: docker-compose.yml.j2
+        dest: /etc/docker-compose.yml
+    - name: run container
+      shell:
+        cmd: docker-compose up -d
+        chdir: /etc

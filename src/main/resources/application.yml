@@ -1,15 +1,67 @@
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 3
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/comppress?allowPublicKeyRetrieval=true
+    url: jdbc:mysql://88.99.190.49:30007/comppress?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
     username: root
-    password: secret
+    password: 7SdLbGPyvZZhHL2sKALZVH3kBx42oJ
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: update
+    show-sql: false
+  mail:
+    host: smtp.mailbox.org
+    username: no-reply@comppress.org
+    password: password
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    protocol: smtp
 server:
   port: 8080
   servlet:
-    context-path: /news-api
+    context-path: /custom-news-api
+scheduler:
+  top-news-feeds:
+    triggeringIntervalMilliSeconds: 30000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
+  news-feed:
+    triggeringIntervalMilliSeconds: 40000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
+  paywall:
+    triggeringIntervalMilliSeconds: 20000
+    initialDelayIntervalMilliSeconds: 4000
+    enabled: no
+    page-size: 100
+  twitter:
+    triggeringIntervalMilliSeconds: 60000
+    initialDelayIntervalMilliSeconds: 5000
+    enabled: no
+jwt:
+  secret: secret
+executor:
+  core:
+    pool:
+      size: 100
+  max:
+    pool:
+      size: 1000
+  queue:
+    size: 100
+#logging:
+#  file:
+#    name: /var/log/comppress.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 25MB
+#      max-history: 7
