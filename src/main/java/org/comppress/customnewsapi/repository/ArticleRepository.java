@@ -280,10 +280,13 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("topic") String topic);
 
     @Query(value = "select * from article a where a.id in " +
-            "(Select DISTINCT(a.id) From article a JOIN rating r on a.id = r.article_id Join user u on r.user_id = u.id WHERE count_ratings > 0 AND user_id = :userId);",
+            "(Select DISTINCT(a.id) From article a JOIN rating r on a.id = r.article_id Join user u on r.user_id = u.id WHERE count_ratings > 0 " +
+            "AND r.user_id = :userId AND r.date_created BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate, now()));",
     nativeQuery = true)
     List<Article> getRatedArticleFromUser(
-            @Param("userId") Long userId
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
     );
 
 

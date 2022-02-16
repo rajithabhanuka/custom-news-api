@@ -288,11 +288,11 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     public ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
-        userEntity.getUsername();
-        // Todo add Date
-        List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());
 
-        List<Long> articleIdList = articleList.stream().map(Article::getId).collect(Collectors.toList());
+        List<Article> articleList = articleRepository.getRatedArticleFromUser(
+                userEntity.getId(),
+                DateUtils.stringToLocalDateTime(fromDate),
+                DateUtils.stringToLocalDateTime(toDate));
 
         List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
         return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
