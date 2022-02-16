@@ -47,7 +47,7 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
 
     public List<Long> getPublisher(List<Long> publisherIds, String lang){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
 
         if(userEntity != null){
             if(userEntity.getListPublisherIds() != null){
@@ -62,7 +62,7 @@ public class HomeServiceImpl implements HomeService, BaseSpecification {
 
     public List<Long> getCategory(List<Long> categoryIds, String lang){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
 
         if(userEntity != null){
             if(userEntity.getListCategoryIds() != null){

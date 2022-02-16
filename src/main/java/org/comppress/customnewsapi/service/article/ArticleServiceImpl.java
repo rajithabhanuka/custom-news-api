@@ -287,7 +287,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     @Override
     public ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
         userEntity.getUsername();
         // Todo add Date
         List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());

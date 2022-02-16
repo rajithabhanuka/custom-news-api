@@ -16,7 +16,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.validation.Valid;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 @RestController
 public class AuthenticationsController {
@@ -52,6 +59,25 @@ public class AuthenticationsController {
         final String token = jwtTokenUtil.generateToken(userDetails);
 
         return ResponseEntity.ok(new AuthResponseDto(token, userDetails.getUsername()));
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteUser() throws InvalidAlgorithmParameterException,
+            NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException,
+            InvalidKeySpecException {
+
+        return userService.deleteUser();
+    }
+
+    @RequestMapping(value = "/delete/{email}", method = RequestMethod.GET)
+    public ResponseEntity<?> getDeletedUser(
+            @PathVariable(name = "email") String email
+    ) throws InvalidAlgorithmParameterException,
+            NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+
+        return userService.getDeletedUser(email);
     }
 
     private void authenticate(String username, String password) throws Exception {
