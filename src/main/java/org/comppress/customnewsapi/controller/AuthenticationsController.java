@@ -62,10 +62,7 @@ public class AuthenticationsController {
     }
 
     @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteUser() throws InvalidAlgorithmParameterException,
-            NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException,
-            InvalidKeySpecException {
+    public ResponseEntity<?> deleteUser() {
 
         return userService.deleteUser();
     }
@@ -73,9 +70,7 @@ public class AuthenticationsController {
     @RequestMapping(value = "/delete/{email}", method = RequestMethod.GET)
     public ResponseEntity<?> getDeletedUser(
             @PathVariable(name = "email") String email
-    ) throws InvalidAlgorithmParameterException,
-            NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+    )  {
 
         return userService.getDeletedUser(email);
     }
