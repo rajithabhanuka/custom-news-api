@@ -67,13 +67,13 @@ public class AuthenticationsController {
         return userService.deleteUser();
     }
 
-    @RequestMapping(value = "/delete/{email}", method = RequestMethod.GET)
-    public ResponseEntity<?> getDeletedUser(
-            @PathVariable(name = "email") String email
-    )  {
-
-        return userService.getDeletedUser(email);
-    }
+//    @RequestMapping(value = "/delete/{email}", method = RequestMethod.GET)
+//    public ResponseEntity<?> getDeletedUser(
+//            @PathVariable(name = "email") String email
+//    )  {
+//
+//        return userService.getDeletedUser(email);
+//    }
 
     private void authenticate(String username, String password) throws Exception {
         try {

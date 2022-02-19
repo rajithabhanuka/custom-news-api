@@ -297,4 +297,27 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
         return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
     }
+
+    @Override
+    public ResponseEntity<GenericPage> getPersonalRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
+
+        List<ArticleRepository.CustomRatedArticle> customRatedArticles =
+                articleRepository.retrieveAllPersonalRatedArticlesInDescOrder(
+                        userEntity.getId(),
+                        DateUtils.stringToLocalDateTime(fromDate),
+                        DateUtils.stringToLocalDateTime(toDate)
+                );
+
+        List<CustomRatedArticleDto> customRatedArticleDtoList = new ArrayList<>();
+        customRatedArticles.forEach(customRatedArticle -> {
+            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
+            BeanUtils.copyProperties(customRatedArticle, customRatedArticleDto);
+            customRatedArticleDtoList.add(customRatedArticleDto);
+        });
+
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtoList);
+    }
 }

@@ -51,7 +51,7 @@ public class ProfileController {
                                                  @RequestParam(value = "fromDate", required = false) String fromDate,
                                                  @RequestParam(value = "toDate", required = false) String toDate
     ) {
-        return articleService.getRatedArticlesFromUser(page, size, fromDate, toDate);
+        return articleService.getPersonalRatedArticlesFromUser(page, size, fromDate, toDate);
     }
 
 }
