@@ -19,6 +19,7 @@ public interface ArticleService extends GenerateGenericPageUtils {
                                                         String fromDate, String toDate);
 
     void fetchArticlesFromRssFeeds();
+
     List<Article> fetchArticlesFromTopNewsFeed(TopNewsFeed topNewsFeed);
 
     void update(Article article) throws URISyntaxException, IOException;
@@ -32,4 +33,6 @@ public interface ArticleService extends GenerateGenericPageUtils {
                                                                 String fromDate, String toDate);
 
     ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate);
+
+    ResponseEntity<GenericPage> getPersonalRatedArticlesFromUser(int page, int size, String fromDate, String toDate);
 }

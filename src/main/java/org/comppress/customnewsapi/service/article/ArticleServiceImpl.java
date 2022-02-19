@@ -287,14 +287,37 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     @Override
     public ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserEntity userEntity = userRepository.findByUsername(authentication.getName());
-        userEntity.getUsername();
-        // Todo add Date
-        List<Article> articleList = articleRepository.getRatedArticleFromUser(userEntity.getId());
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
 
-        List<Long> articleIdList = articleList.stream().map(Article::getId).collect(Collectors.toList());
+        List<Article> articleList = articleRepository.getRatedArticleFromUser(
+                userEntity.getId(),
+                DateUtils.stringToLocalDateTime(fromDate),
+                DateUtils.stringToLocalDateTime(toDate));
 
         List<ArticleDto> articleDtos = articleList.stream().map(Article::toDto).collect(Collectors.toList());
         return PageHolderUtils.getResponseEntityGenericPage(page, size, articleDtos);
+    }
+
+    @Override
+    public ResponseEntity<GenericPage> getPersonalRatedArticlesFromUser(int page, int size, String fromDate, String toDate) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
+
+        List<ArticleRepository.CustomRatedArticle> customRatedArticles =
+                articleRepository.retrieveAllPersonalRatedArticlesInDescOrder(
+                        userEntity.getId(),
+                        DateUtils.stringToLocalDateTime(fromDate),
+                        DateUtils.stringToLocalDateTime(toDate)
+                );
+
+        List<CustomRatedArticleDto> customRatedArticleDtoList = new ArrayList<>();
+        customRatedArticles.forEach(customRatedArticle -> {
+            CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
+            BeanUtils.copyProperties(customRatedArticle, customRatedArticleDto);
+            customRatedArticleDtoList.add(customRatedArticleDto);
+        });
+
+        return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtoList);
     }
 }
