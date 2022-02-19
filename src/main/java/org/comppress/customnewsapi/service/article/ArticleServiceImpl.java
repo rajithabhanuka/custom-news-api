@@ -315,6 +315,9 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         customRatedArticles.forEach(customRatedArticle -> {
             CustomRatedArticleDto customRatedArticleDto = new CustomRatedArticleDto();
             BeanUtils.copyProperties(customRatedArticle, customRatedArticleDto);
+            if (customRatedArticle.getCount_comment() == null) {
+                customRatedArticleDto.setCount_comment(0);
+            }
             customRatedArticleDtoList.add(customRatedArticleDto);
         });
 
