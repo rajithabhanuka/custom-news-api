@@ -37,4 +37,9 @@ public class CustomRatedArticleDto {
     @JsonProperty(value = "count_comment")
     private Integer count_comment;
 
+    @JsonProperty(value = "category_id")
+    private Long category_id;
+
+    @JsonProperty(value = "category_name")
+    private String category_name;
 }
