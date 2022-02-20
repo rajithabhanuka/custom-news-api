@@ -60,7 +60,9 @@ executor:
     size: 100
 gdpr:
   secret: secret
-
+image:
+  width: 200
+  height: 200
 
 
 #logging:

@@ -43,4 +43,7 @@ public class CustomRatedArticleDto {
 
     @JsonProperty(value = "category_name")
     private String category_name;
+
+    @JsonProperty("is_rated")
+    private Boolean isRated;
 }

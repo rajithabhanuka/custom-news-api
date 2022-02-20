@@ -11,6 +11,7 @@ import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.entity.*;
+import org.comppress.customnewsapi.exceptions.GeneralException;
 import org.comppress.customnewsapi.repository.ArticleRepository;
 import org.comppress.customnewsapi.repository.PublisherRepository;
 import org.comppress.customnewsapi.repository.RssFeedRepository;
@@ -21,6 +22,7 @@ import org.comppress.customnewsapi.utils.DateUtils;
 import org.comppress.customnewsapi.utils.PageHolderUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -50,6 +59,12 @@ import java.util.stream.Collectors;
 @Service
 public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
+    @Value("${image.width}")
+    private Integer imageWidth;
+
+    @Value("${image.height}")
+    private Integer imageHeight;
+
     private final RssFeedRepository rssFeedRepository;
     private final ArticleRepository articleRepository;
     private final PublisherRepository publisherRepository;
@@ -63,7 +78,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         this.userRepository = userRepository;
     }
 
-    public List<Article> fetchArticlesFromTopNewsFeed(TopNewsFeed topNewsFeed){
+    public List<Article> fetchArticlesFromTopNewsFeed(TopNewsFeed topNewsFeed) {
         List<Article> articles = new ArrayList<>();
 
         SyndFeed feed = new SyndFeedImpl();
@@ -179,7 +194,20 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             if (imgUrl == null && syndEntry.getContents() != null && syndEntry.getContents().size() > 0) {
                 imgUrl = CustomStringUtils.getImgLinkFromTagSrc(syndEntry.getContents().get(0).getValue(), "url=\"");
             }
-            if (imgUrl == null || imgUrl.isEmpty()) {
+
+            Dimension dimension = new Dimension(0, 0);
+
+            if (imgUrl != null) {
+                dimension = getImageDimension(imgUrl);
+            }
+
+            boolean isBadResolution = false;
+            // If width or length of the image is less than 200px then we save the publisher image
+            if (dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) {
+                isBadResolution = true;
+            }
+
+            if (imgUrl == null || imgUrl.isEmpty() || isBadResolution) {
                 Optional<Publisher> publisher = publisherRepository.findById(rssFeed.getPublisherId());
                 article.setUrlToImage(publisher.get().getUrlToImage());
             } else {
@@ -201,9 +229,9 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             article.setDescription(formatText(syndEntry.getDescription().getValue()));
         }
 
-        if(rssFeed != null){
+        if (rssFeed != null) {
             article.setRssFeedId(rssFeed.getId());
-        }else {
+        } else {
             article.setRssFeedId(-1L);
         }
         return article;
@@ -322,5 +350,21 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         });
 
         return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtoList);
+    }
+
+    public static Dimension getImageDimension(String imageUrl) {
+
+        BufferedImage image;
+        URL url = null;
+        try {
+            url = new URL(imageUrl);
+            image = ImageIO.read(url);
+
+            return new Dimension(image.getHeight(), image.getWidth());
+
+        } catch (IOException e) {
+            throw new GeneralException("Error while get the resolution of the image", String.valueOf(url));
+        }
+
     }
 }
