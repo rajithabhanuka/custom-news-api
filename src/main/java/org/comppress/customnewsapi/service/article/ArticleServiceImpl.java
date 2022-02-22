@@ -302,7 +302,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         if (listPublisherIds == null) {
             listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
-        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(fromDate), PageRequest.of(page, size));
+        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size));
 
         GenericPage<ArticleDto> genericPage = new GenericPage<>();
         genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));
