@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -199,7 +200,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
 
             boolean isBadResolution = false;
             // If width or length of the image is less than 200px then we save the publisher image
-            if (dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) {
+            if ((dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) && imgUrl != null) {
                 isBadResolution = true;
                 log.info("Picture with image url {} has a bad resolution",imgUrl);
             }
@@ -349,13 +350,18 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return PageHolderUtils.getResponseEntityGenericPage(page, size, customRatedArticleDtoList);
     }
 
-    public static Dimension getImageDimension(String imageUrl) {
+    private Dimension getImageDimension(String imageUrl) {
 
         BufferedImage image;
         URL url = null;
         try {
             url = new URL(imageUrl);
             image = ImageIO.read(url);
+
+            DataBuffer dataBuffer = image.getData().getDataBuffer();
+
+            long sizeBytes = ((long) dataBuffer.getSize()) * 4L;
+            long sizeMB = sizeBytes / (1024L * 1024L);
 
             return new Dimension(image.getHeight(), image.getWidth());
 
