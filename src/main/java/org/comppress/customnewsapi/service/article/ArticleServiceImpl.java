@@ -35,12 +35,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -205,6 +201,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             // If width or length of the image is less than 200px then we save the publisher image
             if (dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) {
                 isBadResolution = true;
+                log.info("Picture with image url {} has a bad resolution",imgUrl);
             }
 
             if (imgUrl == null || imgUrl.isEmpty() || isBadResolution) {
