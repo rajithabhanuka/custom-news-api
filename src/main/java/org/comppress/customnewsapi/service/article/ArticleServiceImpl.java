@@ -8,6 +8,7 @@ import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import lombok.extern.slf4j.Slf4j;
 import org.comppress.customnewsapi.dto.ArticleDto;
+import org.comppress.customnewsapi.dto.CustomArticleDto;
 import org.comppress.customnewsapi.dto.CustomRatedArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.entity.*;
@@ -253,21 +254,27 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
         return response.body();
     }
 
-    public ResponseEntity<GenericPage<ArticleDto>> getArticles(int page, int size, String title, String category, String publisherNewsPaper, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<CustomArticleDto>> getArticles(int page, int size, String title, String category, String publisherNewsPaper, String lang, String fromDate, String toDate) {
 
-        Page<Article> articlesPage = articleRepository
-                .retrieveByCategoryOrPublisherName(category,
+        Page<ArticleRepository.CustomArticle> articlesPage = articleRepository
+                .retrieveByCategoryOrPublisherNameToCustomArticle(category,
                         publisherNewsPaper, title, lang,
                         DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate),
                         PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
 
 
-        GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));
+        GenericPage<CustomArticleDto> genericPage = new GenericPage<>();
+        genericPage.setData(articlesPage.stream().map(this::toCustomDto).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
 
+    }
+
+    private CustomArticleDto toCustomDto(ArticleRepository.CustomArticle s) {
+        CustomArticleDto dto = new CustomArticleDto();
+        BeanUtils.copyProperties(s, dto);
+        return dto;
     }
 
     @Override
@@ -296,14 +303,14 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage<ArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<CustomArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
         if (listPublisherIds == null) {
             listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
-        Page<Article> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size));
+        Page<ArticleRepository.CustomArticle> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size));
 
-        GenericPage<ArticleDto> genericPage = new GenericPage<>();
-        genericPage.setData(articlesPage.stream().map(Article::toDto).collect(Collectors.toList()));
+        GenericPage<CustomArticleDto> genericPage = new GenericPage<>();
+        genericPage.setData(articlesPage.stream().map(this::toCustomDto).collect(Collectors.toList()));
         BeanUtils.copyProperties(articlesPage, genericPage);
 
         return ResponseEntity.status(HttpStatus.OK).body(genericPage);
