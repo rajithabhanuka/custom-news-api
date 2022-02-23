@@ -203,7 +203,7 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             // If width or length of the image is less than 200px then we save the publisher image
             if ((dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) && imgUrl != null) {
                 isBadResolution = true;
-                log.info("Picture with image url {} has a bad resolution",imgUrl);
+                log.info("Picture with image url {} has a bad resolution", imgUrl);
             }
 
             if (imgUrl == null || imgUrl.isEmpty() || isBadResolution) {
@@ -365,10 +365,12 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             url = new URL(imageUrl);
             image = ImageIO.read(url);
 
-            DataBuffer dataBuffer = image.getData().getDataBuffer();
 
-            long sizeBytes = ((long) dataBuffer.getSize()) * 4L;
-            long sizeMB = sizeBytes / (1024L * 1024L);
+//            TODO size checking
+
+//            DataBuffer dataBuffer = image.getData().getDataBuffer();
+//            long sizeBytes = ((long) dataBuffer.getSize()) * 4L;
+//            long sizeMB = sizeBytes / (1024L * 1024L);
 
             return new Dimension(image.getHeight(), image.getWidth());
 
