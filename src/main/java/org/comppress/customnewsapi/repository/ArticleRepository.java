@@ -1,6 +1,5 @@
 package org.comppress.customnewsapi.repository;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.comppress.customnewsapi.entity.Article;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -262,6 +261,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "rf.category_id = :categoryId AND " +
             "rf.publisher_id in (:publisherIds) AND " +
             "rf.lang = :lang AND " +
+            "(:topFeed =  0 or :topFeed = a.is_top_news) AND " +
             "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) " +
             "ORDER BY a.published_at DESC",
             countQuery = "SELECT count(*) " +
@@ -272,6 +272,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
                     "rf.category_id = :categoryId AND " +
                     "rf.publisher_id in (:publisherIds) AND " +
                     "rf.lang = :lang AND " +
+                    "(:topFeed =  0 or :topFeed = a.is_top_news) AND " +
                     "a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now())"
             , nativeQuery = true)
     Page<CustomArticle> retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(
@@ -280,6 +281,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("lang") String lang,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
+            @Param("topFeed") Boolean topFeed,
             Pageable pageable);
 
     @Query(value = "select c.id as category_id, c.name as category_name, 0 as count_comment, p.id as publisher_id, p.name as publisher_name,t.article_id, a.author, a.title, a.description, a.url, a.url_to_image, a.guid, a.published_at,a.content, a.count_ratings, a.is_accessible, t.average_rating_criteria_1, t.average_rating_criteria_2,t.average_rating_criteria_3, sum(t.average_rating_criteria_1 + t.average_rating_criteria_2 + t.average_rating_criteria_3)/ (CASE WHEN  t.average_rating_criteria_1 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_2 IS NULL THEN 0 ELSE 1 END + CASE WHEN t.average_rating_criteria_3 IS NULL THEN 0 ELSE 1 END) AS total_average_rating from (SELECT distinct r.article_id,(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=1) as average_rating_criteria_1,(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=2) as average_rating_criteria_2,(select avg(r1.rating) from rating r1 where r1.article_id = r.article_id AND r1.criteria_id=3) as average_rating_criteria_3 FROM rating r group by r.article_id) as t INNER JOIN article a ON a.id= t.article_id INNER JOIN rss_feed rf ON rf.id = a.rss_feed_id INNER JOIN category c ON c.id = rf.category_id INNER JOIN publisher p ON p.id = rf.publisher_id INNER JOIN article_topic at2 on a.id = at2.article_id INNER JOIN topic t2 on at2.topic_id = t2.id WHERE rf.lang = :lang AND t2.id = :topicId AND a.published_at BETWEEN IFNULL(:fromDate, '1900-01-01 00:00:00') AND IFNULL(:toDate,now()) group by t.article_id order by total_average_rating DESC",

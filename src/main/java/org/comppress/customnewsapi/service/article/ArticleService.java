@@ -1,6 +1,5 @@
 package org.comppress.customnewsapi.service.article;
 
-import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.entity.Article;
@@ -31,7 +30,7 @@ public interface ArticleService extends GenerateGenericPageUtils {
 
     ResponseEntity<GenericPage<CustomArticleDto>> getArticlesNotRated(int page, int size, Long categoryId,
                                                                 List<Long> listPublisherIds, String lang,
-                                                                String fromDate, String toDate);
+                                                                String fromDate, String toDate, Boolean topFeed);
 
     ResponseEntity<GenericPage> getRatedArticlesFromUser(int page, int size, String fromDate, String toDate);
 

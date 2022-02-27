@@ -1,6 +1,5 @@
 package org.comppress.customnewsapi.controller;
 
-import org.comppress.customnewsapi.dto.ArticleDto;
 import org.comppress.customnewsapi.dto.CustomArticleDto;
 import org.comppress.customnewsapi.dto.GenericPage;
 import org.comppress.customnewsapi.service.article.ArticleService;
@@ -46,9 +45,10 @@ public class ArticleController {
             @RequestParam(value = "listPublisherIds", required = false) List<Long> listPublisherIds,
             @RequestParam(value = "lang", required = false, defaultValue = "en") String lang,
             @RequestParam(value = "fromDate", required = false) String fromDate,
-            @RequestParam(value = "toDate", required = false) String toDate
+            @RequestParam(value = "toDate", required = false) String toDate,
+            @RequestParam(value = "topFeed", required = false, defaultValue = "false") Boolean topFeed
     ) {
-        return articleService.getArticlesNotRated(page, size, categoryId, listPublisherIds, lang, fromDate, toDate);
+        return articleService.getArticlesNotRated(page, size, categoryId, listPublisherIds, lang, fromDate, toDate, topFeed);
     }
 
     @GetMapping("/rated")

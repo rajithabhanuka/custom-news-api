@@ -38,7 +38,6 @@ import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -203,14 +202,15 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
             // If width or length of the image is less than 200px then we save the publisher image
             if ((dimension.getHeight() < imageHeight || dimension.getWidth() < imageWidth) && imgUrl != null) {
                 isBadResolution = true;
-                log.info("Picture with image url {} has a bad resolution", imgUrl);
+                log.debug("Picture with image url {} has a bad resolution", imgUrl);
             }
-
-            if (imgUrl == null || imgUrl.isEmpty() || isBadResolution) {
-                Optional<Publisher> publisher = publisherRepository.findById(rssFeed.getPublisherId());
-                article.setUrlToImage(publisher.get().getUrlToImage());
-            } else {
-                article.setUrlToImage(imgUrl);
+            if(rssFeed != null){
+                if (imgUrl == null || imgUrl.isEmpty() || isBadResolution) {
+                    Optional<Publisher> publisher = publisherRepository.findById(rssFeed.getPublisherId());
+                    article.setUrlToImage(publisher.get().getUrlToImage());
+                } else {
+                    article.setUrlToImage(imgUrl);
+                }
             }
         }
         if (syndEntry.getUri() != null) {
@@ -303,11 +303,11 @@ public class ArticleServiceImpl implements ArticleService, BaseSpecification {
     }
 
     @Override
-    public ResponseEntity<GenericPage<CustomArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate) {
+    public ResponseEntity<GenericPage<CustomArticleDto>> getArticlesNotRated(int page, int size, Long categoryId, List<Long> listPublisherIds, String lang, String fromDate, String toDate, Boolean topFeed) {
         if (listPublisherIds == null) {
             listPublisherIds = publisherRepository.findAll().stream().map(Publisher::getId).collect(Collectors.toList());
         }
-        Page<ArticleRepository.CustomArticle> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), PageRequest.of(page, size));
+        Page<ArticleRepository.CustomArticle> articlesPage = articleRepository.retrieveUnratedArticlesByCategoryIdAndPublisherIdsAndLanguage(categoryId, listPublisherIds, lang, DateUtils.stringToLocalDateTime(fromDate), DateUtils.stringToLocalDateTime(toDate), topFeed,PageRequest.of(page, size));
 
         GenericPage<CustomArticleDto> genericPage = new GenericPage<>();
         genericPage.setData(articlesPage.stream().map(this::toCustomDto).collect(Collectors.toList()));
